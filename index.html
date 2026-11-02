@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comunicación indirecta · Grupo 7</title>
+<style>
+  :root{
+    --bg:#07090c;
+    --surface:#0d1319;
+    --line:#1c2833;
+    --ink:#f2f6fa;
+    --muted:#7e93a8;
+    --mint:#35e0c4;
+    --amber:#ffb020;
+    --violet:#a78bfa;
+    --red:#ff6b5e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:grid;place-items:center;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;
+    background:
+      radial-gradient(1100px 620px at 82% -12%, #10222b 0%, transparent 62%),
+      radial-gradient(820px 520px at -8% 112%, #14101f 0%, transparent 58%);
+  }
+
+  /* ── escenario fijo 1280×720, escalado al viewport ── */
+  #stage{
+    width:1280px;height:720px;position:relative;flex:none;
+    transform-origin:center center;
+  }
+
+  .slide{
+    position:absolute;inset:0;
+    padding:52px 76px 44px;
+    display:none;flex-direction:column;
+    background:var(--bg);
+    border-radius:3px;
+  }
+  .slide.on{display:flex;animation:in .32s cubic-bezier(.22,.9,.3,1) both}
+  @keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .num{
+    position:absolute;right:56px;top:6px;
+    font-size:250px;font-weight:800;line-height:1;
+    color:#fff;opacity:.045;letter-spacing:-.05em;pointer-events:none;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .head{display:flex;align-items:baseline;gap:18px;flex:none;
+        border-bottom:1px solid var(--line);padding-bottom:14px}
+  .kick{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:12px;letter-spacing:.26em;color:var(--mint);padding-top:6px;
+  }
+  h2{font-size:40px;line-height:1.08;font-weight:780;letter-spacing:-.022em;text-wrap:balance}
+
+  .body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px;min-height:0;padding:18px 0}
+
+  .key{
+    flex:none;display:flex;gap:14px;align-items:baseline;
+    border-left:3px solid var(--mint);padding:10px 0 10px 16px;
+    background:linear-gradient(90deg,rgba(53,224,196,.06),transparent 68%);
+    font-size:19px;line-height:1.35;font-weight:600;color:#d6f7f1;
+  }
+  .key b{color:var(--mint);font-weight:750}
+
+  /* ── piezas ── */
+  .flow{display:flex;align-items:center;justify-content:center;gap:12px}
+  .node{
+    border:1px solid var(--line);border-radius:11px;background:var(--surface);
+    padding:9px 16px;font-size:15px;font-weight:680;white-space:nowrap;text-align:center;
+  }
+  .node small{display:block;font-size:11px;font-weight:500;color:var(--muted);margin-top:2px}
+  .node.p{border-color:#25505a;color:#b8ece5}
+  .node.b{border-color:#2c6a5f;background:#0a2420;color:#8df2e2}
+  .node.c{border-color:#3d3568;color:#cabfff}
+  .node.bad{border-color:#5e2e29;background:#1a100f;color:#ffb4ad}
+  .arrow{width:54px;height:1.5px;background:#334455;position:relative;flex:none}
+  .arrow::after{content:"";position:absolute;right:0;top:-4px;
+    border-left:8px solid #334455;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent}
+  .arrow.hot{background:var(--red)}.arrow.hot::after{border-left-color:var(--red)}
+
+  .cards{display:grid;gap:16px}
+  .cards.c2{grid-template-columns:1fr 1fr}
+  .cards.c3{grid-template-columns:repeat(3,1fr)}
+  .card{
+    border:1px solid var(--line);border-radius:14px;padding:18px 20px;
+    background:linear-gradient(170deg,#0e161d,#0a1015);
+    display:flex;flex-direction:column;gap:8px;min-width:0;
+  }
+  .card h3{font-size:16px;font-weight:720;letter-spacing:-.01em;color:var(--mint)}
+  .card.amber h3{color:var(--amber)}
+  .card.violet h3{color:var(--violet)}
+  .card p{font-size:14.5px;line-height:1.45;color:#c6d3df}
+  .card .tag{
+    align-self:flex-start;font-family:ui-monospace,monospace;font-size:10px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+    border:1px solid var(--line);border-radius:4px;padding:2px 7px;
+  }
+  .card .hint{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--muted);margin-top:2px}
+
+  ul{list-style:none;display:flex;flex-direction:column;gap:11px}
+  li{position:relative;padding-left:20px;font-size:16px;line-height:1.42;color:#d3dee9}
+  li::before{content:"";position:absolute;left:0;top:.55em;width:6px;height:6px;border-radius:2px;background:var(--mint)}
+  ul.warn li::before{background:var(--amber)}
+  ul.calm li::before{background:var(--muted)}
+  li b{color:#fff;font-weight:680}
+
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}
+
+  /* log de particiones */
+  .log{display:flex;flex-direction:column;gap:7px}
+  .track{display:flex;align-items:center;gap:8px}
+  .pid{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);width:26px;flex:none}
+  .cells{display:flex;gap:3px;flex:1}
+  .cell{flex:1;height:26px;border-radius:3px;background:#131e28;border:1px solid #1e2c37}
+  .cell.on{background:#123d38;border-color:#256b61}
+  .cell.cur{background:#2f6f66;border-color:var(--mint)}
+
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:11px 12px;font-size:14.5px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+  td:first-child{font-weight:650;color:#fff}
+  .yes{color:var(--mint);font-weight:700}
+  .no{color:var(--amber);font-weight:700}
+
+  .dash{border:1.5px dashed #33475c;border-radius:14px;padding:16px 20px;background:rgba(51,71,92,.07)}
+  .dash h3{color:var(--amber);font-size:15px;margin-bottom:6px}
+  .dash p{font-size:14.5px;line-height:1.45;color:#c6d3df}
+
+  /* portada y cierre */
+  .cover{padding:0 76px;justify-content:center}
+  .cover .bar{width:76px;height:3px;background:var(--mint);border-radius:2px;margin-bottom:30px}
+  h1{font-size:78px;line-height:.98;font-weight:800;letter-spacing:-.035em}
+  .cover .sub{font-size:22px;color:var(--muted);margin-top:22px;max-width:20em;line-height:1.45}
+  .cover .meta{display:flex;gap:30px;margin-top:44px;font-size:14px;color:var(--muted)}
+  .cover .meta b{color:var(--ink);font-weight:650}
+
+  .take{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .take .n{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.2em;color:var(--mint)}
+
+  /* ── chrome ── */
+  .prog{position:fixed;left:0;top:0;height:2px;background:var(--mint);width:0;transition:width .22s ease;z-index:40}
+  .hud{
+    position:fixed;right:18px;bottom:14px;display:flex;gap:16px;
+    font-family:ui-monospace,monospace;font-size:11px;color:#4a5f74;z-index:40;user-select:none;
+  }
+  .hud b{color:#7e93a8;font-weight:500}
+
+  .toolbar{
+    position:fixed;left:18px;bottom:14px;display:none;gap:8px;z-index:41;
+    font-family:ui-monospace,monospace;font-size:11px;
+  }
+  .toolbar.on{display:flex}
+  .toolbar button{
+    background:#101a22;border:1px solid var(--line);color:#a8bccd;
+    padding:6px 10px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:11px;
+  }
+  .toolbar button:hover{border-color:var(--mint);color:var(--mint)}
+
+  #editing [contenteditable="true"],body.editing .slide :is(h1,h2,h3,p,li,td,th,span,div.key,.sub){
+    outline:1px dashed transparent;outline-offset:3px;
+  }
+  body.editing .slide :is(h1,h2,h3,p,li,td,th,.key,.sub){
+    outline-color:#2c4256;cursor:text;
+  }
+  body.editing .slide :is(h1,h2,h3,p,li,td,th,.key,.sub):focus{
+    outline-color:var(--mint);background:rgba(53,224,196,.04);
+  }
+
+  .notes{
+    position:fixed;left:0;right:0;bottom:0;max-height:40vh;overflow:auto;display:none;
+    background:#05080b;border-top:1px solid var(--line);z-index:42;
+    padding:16px 24px;font-size:13.5px;line-height:1.55;color:#9fb3c5;
+  }
+  .notes.on{display:block}
+  .notes b{color:var(--mint)}
+  .notes ul{gap:5px}
+  .notes li{font-size:13px}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media print{
+    html,body{overflow:visible;height:auto}
+    body{display:block}
+    body::before,#stage{display:contents}
+    #stage{width:auto;height:auto;transform:none!important}
+    .slide{display:flex!important;position:relative;page-break-after:always;width:1280px;height:720px;animation:none}
+    .prog,.hud,.toolbar,.notes{display:none!important}
+  }
+</style>
+</head>
+<body>
+
+<div class="prog" id="prog"></div>
+<div id="stage">
+
+<!-- 01 -->
+<section class="slide on" data-notes="<b>0:00 · 20 s</b><ul><li>Quiénes y una frase de qué van a ver.</li><li>Arrancar por el problema, no por la herramienta: «dos programas que necesitan estar vivos al mismo tiempo».</li></ul>">
+  <div class="num">01</div>
+  <div class="cover">
+    <div class="bar"></div>
+    <h1>Comunicación<br>indirecta</h1>
+    <p class="sub">Qué gana un sistema cuando en el medio aparece un tercero que guarda los mensajes.</p>
+    <div class="meta">
+      <span><b>Grupo 7</b> · orden 3</span>
+      <span>Lencina · Ureta</span>
+      <span>Sistemas Distribuidos</span>
+    </div>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="slide" data-notes="<b>0:20 · 1 min</b><ul><li>No definir «broker» todavía. El objetivo es que quede el problema.</li><li>Tres cadenas: si cortás una, la llamada directa ya no sirve.</li></ul>">
+  <div class="num">02</div>
+  <div class="head"><span class="kick">02</span><h2>Toda llamada directa carga con tres acoplamientos</h2></div>
+  <div class="body">
+    <div class="cards c3">
+      <div class="card"><span class="tag">espacio</span><h3>Tiene que saber dónde está</h3><p>Para llamar hay que conocer la dirección del otro. Si se muda, el que llama se rompe.</p></div>
+      <div class="card"><span class="tag">tiempo</span><h3>Tienen que estar vivos</h3><p>Los dos, en el mismo instante. Si el que atiende se cayó, la llamada no existe.</p></div>
+      <div class="card"><span class="tag">ritmo</span><h3>Tienen que ir igual</h3><p>El que llama espera. Si el otro tarda más, alguien se cansa y corta.</p></div>
+    </div>
+    <div class="flow" style="margin-top:6px">
+      <span class="node p">proceso A</span><span class="arrow"></span><span class="node c">proceso B</span>
+    </div>
+  </div>
+  <div class="key">Llamar directo te obliga a las tres cosas <b>a la vez</b>: saber la dirección, estar vivos juntos, ir a la misma velocidad.</div>
+</section>
+
+<!-- 03 -->
+<section class="slide" data-notes="<b>1:20 · 1 min 20</b><ul><li>Este es el «antes» que pide la cátedra: mostrar el estado inicial roto.</li><li>Timeout no es lentitud: es que los dos acordaron cosas distintas.</li></ul>">
+  <div class="num">03</div>
+  <div class="head"><span class="kick">03</span><h2>Qué se rompe cuando el consumidor va más lento</h2></div>
+  <div class="body">
+    <div class="cards c3">
+      <div class="card"><span class="tag">slow consumer</span><h3>Timeouts en cascada</h3><p>El que llama espera, se cansa y corta. El otro sigue trabajando para un pedido que ya nadie escucha.</p></div>
+      <div class="card amber"><span class="tag">retry</span><h3>Reintentos que hunden</h3><p>Cada timeout genera más pedidos sobre un sistema que ya no daba abasto. El problema se multiplica solo.</p></div>
+      <div class="card"><span class="tag">down</span><h3>Trabajo perdido</h3><p>Si el consumidor se cae, el pedido no existe en ningún lado. No hay de dónde recuperarlo.</p></div>
+    </div>
+    <div class="flow" style="margin-top:6px">
+      <span class="node p">productor<small>20 msg/s</small></span>
+      <span class="arrow hot"></span>
+      <span class="node bad">consumidor<small>8 msg/s</small></span>
+    </div>
+  </div>
+  <div class="key">Un timeout no es un problema de red: es un <b>desacuerdo de ritmo</b> entre dos procesos.</div>
+</section>
+
+<!-- 04 -->
+<section class="slide" data-notes="<b>2:40 · 1 min 20</b><ul><li>El broker se presenta como <b>memoria</b>, no como mensajero. Ese es el punto.</li><li>Desacoplar no es que no se necesiten: es que dejan de necesitarse al mismo tiempo.</li><li>Ojo con lo que se paga: el mensaje ahora vive en un tercer lugar.</li></ul>">
+  <div class="num">04</div>
+  <div class="head"><span class="kick">04</span><h2>El broker es un tercero que guarda</h2></div>
+  <div class="body">
+    <div class="flow">
+      <span class="node p">productor</span><span class="arrow"></span>
+      <span class="node b">broker<small>retiene</small></span><span class="arrow"></span>
+      <span class="node c">consumidor</span>
+    </div>
+    <div class="cards c2">
+      <div class="card"><h3>Lo que se gana</h3>
+        <ul>
+          <li><b>Espacio:</b> el productor no sabe dónde está el consumidor.</li>
+          <li><b>Tiempo:</b> puede publicar con el consumidor apagado.</li>
+          <li><b>Ritmo:</b> nadie espera a nadie.</li>
+        </ul>
+      </div>
+      <div class="card amber"><h3>Lo que se paga</h3>
+        <ul class="warn">
+          <li>Un salto más de latencia.</li>
+          <li>Un servicio más que operar y monitorear.</li>
+          <li>Datos vivos en otro lado: respaldo, retención, permisos.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="key">El broker no hace la comunicación más rápida. La hace <b>independiente en el tiempo</b>.</div>
+</section>
+
+<!-- 05 -->
+<section class="slide" data-notes="<b>4:00 · 1 min 30</b><ul><li>Este es el eje que la cátedra dice que se evalúa: distinguir difundir de repartir.</li><li>Misma plomería, decisión distinta. No es la herramienta: es quién está del otro lado.</li><li>Pregunta típica: «¿y si agrego otro consumer en pub/sub?» → recibe todo también.</li></ul>">
+  <div class="num">05</div>
+  <div class="head"><span class="kick">05</span><h2>Difundir no es repartir</h2></div>
+  <div class="body">
+    <div class="cards c2">
+      <div class="card violet"><span class="tag">pub / sub · 1 → N</span><h3>Un evento llega a todos</h3>
+        <div class="flow" style="justify-content:flex-start;margin:6px 0">
+          <span class="node p" style="font-size:12px;padding:6px 10px">evento</span><span class="arrow" style="width:30px"></span>
+          <span class="node c" style="font-size:12px;padding:6px 12px">A</span>
+          <span class="node c" style="font-size:12px;padding:6px 12px">B</span>
+          <span class="node c" style="font-size:12px;padding:6px 12px">C</span>
+        </div>
+        <p>Cada suscriptor necesita enterarse. Sumar uno <b>no</b> acelera: suma otro que hace lo mismo.</p>
+      </div>
+      <div class="card"><span class="tag">cola de trabajo · 1 → 1</span><h3>Cada tarea la toma uno</h3>
+        <div class="flow" style="justify-content:flex-start;margin:6px 0">
+          <span class="node p" style="font-size:12px;padding:6px 10px">tarea</span><span class="arrow" style="width:26px"></span>
+          <span class="node b" style="font-size:12px;padding:6px 10px">cola</span><span class="arrow" style="width:26px"></span>
+          <span class="node c" style="font-size:12px;padding:6px 12px">A</span>
+          <span class="node c" style="font-size:12px;padding:6px 12px">B</span>
+        </div>
+        <p>La tarea se resuelve una sola vez. Sumar un worker <b>sí</b> reparte la carga y acelera.</p>
+      </div>
+    </div>
+  </div>
+  <div class="key">La misma plomería, dos decisiones: ¿este mensaje lo necesitan <b>todos</b> o lo resuelve <b>uno</b>?</div>
+</section>
+
+<!-- 06 -->
+<section class="slide" data-notes="<b>5:30 · 1 min 20</b><ul><li>Kafka no es una cola: es un <b>log</b>. Nadie borra.</li><li>El log resuelve los dos patrones con una sola estructura.</li><li>Trampa: con una sola partición, el segundo consumer del grupo queda ocioso.</li></ul>">
+  <div class="num">06</div>
+  <div class="head"><span class="kick">06</span><h2>Kafka: un log, no una cola</h2></div>
+  <div class="body">
+    <div class="cards c2" style="grid-template-columns:1.15fr 1fr">
+      <div class="card">
+        <span class="tag">tópico pedidos · 3 particiones</span>
+        <div class="log" style="margin-top:4px">
+          <div class="track"><span class="pid">P0</span><div class="cells">
+            <i class="cell on"></i><i class="cell on"></i><i class="cell on"></i><i class="cell cur"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i></div></div>
+          <div class="track"><span class="pid">P1</span><div class="cells">
+            <i class="cell on"></i><i class="cell on"></i><i class="cell on"></i><i class="cell on"></i><i class="cell cur"></i><i class="cell"></i><i class="cell"></i></div></div>
+          <div class="track"><span class="pid">P2</span><div class="cells">
+            <i class="cell on"></i><i class="cell on"></i><i class="cell cur"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i></div></div>
+        </div>
+        <p class="hint" style="font-size:11.5px">verde = escrito y leído · mint = offset actual · gris = escrito y sin leer</p>
+        <p>Lo gris no está vacío: sigue ahí, esperando. Nada se borra al leer.</p>
+      </div>
+      <div class="card">
+        <h3>Qué es cada cosa</h3>
+        <ul>
+          <li><b>Log:</b> se agrega al final; se retiene por tiempo o tamaño.</li>
+          <li><b>Offset:</b> cada consumidor guarda hasta dónde leyó.</li>
+          <li><b>Consumer group:</b> decide si es difundir o repartir.</li>
+        </ul>
+        <div class="dash"><h3>El techo está en las particiones</h3><p>Un consumidor por partición, como máximo. Con una sola, el segundo del grupo queda mirando.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="key">En Kafka <b>nadie borra</b>: cada consumer group lleva su propio marcador. Por eso se puede volver atrás.</div>
+</section>
+
+<!-- 07 -->
+<section class="slide" data-notes="<b>6:50 · 1 min 20</b><ul><li>RabbitMQ es el del TP6: exchanges, bindings, colas, ack.</li><li>La diferencia de fondo: acá el mensaje <b>se borra</b> cuando se confirma.</li><li>No es cuál es mejor: es qué te compra cada uno.</li></ul>">
+  <div class="num">07</div>
+  <div class="head"><span class="kick">07</span><h2>RabbitMQ: colas que se vacían al confirmar</h2></div>
+  <div class="body">
+    <div class="flow" style="margin-bottom:4px">
+      <span class="node p">publisher</span><span class="arrow"></span>
+      <span class="node b">exchange<small>routing key</small></span><span class="arrow"></span>
+      <span class="node b">cola</span><span class="arrow"></span>
+      <span class="node c">consumer</span>
+    </div>
+    <table>
+      <thead><tr><th></th><th>Kafka</th><th>RabbitMQ</th></tr></thead>
+      <tbody>
+        <tr><td>Qué es</td><td>Log de particiones</td><td>Colas con exchanges</td></tr>
+        <tr><td>Cuándo desaparece el mensaje</td><td>Por retención</td><td>Al hacer <span class="mono">ack</span></td></tr>
+        <tr><td>Volver a leer el pasado</td><td class="yes">Sí, moviendo el offset</td><td class="no">No: ya se borró</td></tr>
+        <tr><td>Más consumidores = más velocidad</td><td>Sí, hasta el nº de particiones</td><td class="yes">Sí, sin techo fijo</td></tr>
+        <tr><td>Orden</td><td>Por partición</td><td>Por cola</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="key">En RabbitMQ el mensaje <b>se borra cuando confirmás</b>. Es eficiente, y es irreversible.</div>
+</section>
+
+<!-- 08 -->
+<section class="slide" data-notes="<b>8:10 · 1 min 30</b><ul><li>La slide con más preguntas posibles. Ir despacio.</li><li>«Exactly once» casi nunca es del broker solo: es broker + consumidor idempotente.</li><li>Frase para dejar: at-least-once es una garantía del broker <b>y</b> una obligación del consumidor.</li></ul>">
+  <div class="num">08</div>
+  <div class="head"><span class="kick">08</span><h2>Garantías: lo que el broker no te regala</h2></div>
+  <div class="body">
+    <div class="cards c3">
+      <div class="card amber"><span class="tag">at-most-once</span><h3>Puede perderse</h3><p>Confirmo antes de procesar. Si me caigo, el mensaje ya no está. Rápido y sin duplicados.</p></div>
+      <div class="card"><span class="tag">at-least-once</span><h3>Puede repetirse</h3><p>Confirmo <b>después</b> de procesar. Si me caigo antes, vuelve. Nunca se pierde, puede duplicarse.</p></div>
+      <div class="card violet"><span class="tag">exactly-once</span><h3>Carísimo</h3><p>No es gratis ni es del broker solo: hace falta transacción o un consumidor idempotente.</p></div>
+    </div>
+    <div class="cards c2">
+      <div class="card"><h3>Duplicar es normal</h3>
+        <ul class="warn">
+          <li>La red no distingue «no llegó» de «llegó y no me enteré».</li>
+          <li><b>Idempotencia:</b> procesar dos veces deja el mismo resultado.</li>
+        </ul>
+      </div>
+      <div class="card"><h3>Orden</h3>
+        <ul class="calm">
+          <li>Existe dentro de una partición o de una cola. Global, no.</li>
+          <li>La garantía no es configuración: es qué hace tu código cuando algo se repite.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="key"><b>At-least-once</b> no es una promesa del broker: es una obligación del consumidor. Si no es idempotente, duplica.</div>
+</section>
+
+<!-- 09 -->
+<section class="slide" data-notes="<b>9:40 · 1 min 20</b><ul><li>Una cuarta parte de la nota es <b>criterio</b>. No decir «elegimos X porque es mejor».</li><li>Decir qué se paga y en qué caso concreto no lo usaríamos.</li><li>Cerrar con la decisión del grupo y por qué.</li></ul>">
+  <div class="num">09</div>
+  <div class="head"><span class="kick">09</span><h2>Criterio: qué se paga y cuándo no usarlo</h2></div>
+  <div class="body">
+    <div class="cards c2">
+      <div class="card amber"><h3>Lo que se paga</h3>
+        <ul class="warn">
+          <li>Un servicio más que opera alguien.</li>
+          <li>Latencia extra y consistencia eventual.</li>
+          <li>Datos vivos en otro lado: retención, respaldo, permisos.</li>
+          <li>Depurar es más difícil: el error está en un tercero.</li>
+        </ul>
+      </div>
+      <div class="card"><h3>Cuándo no lo usaría</h3>
+        <ul class="calm">
+          <li>Necesitás la respuesta ahora (consulta, pantalla, RPC).</li>
+          <li>El volumen es trivial: un <span class="mono">INSERT</span> alcanza.</li>
+          <li>Nadie puede operar el broker: un componente que nadie mantiene es una bomba.</li>
+          <li>Necesitás orden global estricto.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="dash">
+      <h3>Decisión del grupo · completar con Ureta</h3>
+      <p>Elegimos <b>____</b> porque la demo tiene que mostrar <b>____</b>, que es justo lo que el TP6 no podía mostrar. Lo pagamos con <b>____</b>.</p>
+    </div>
+  </div>
+  <div class="key">El broker no elimina complejidad: la <b>mueve de lugar</b> y te la cobra en operación.</div>
+</section>
+
+<!-- 10 -->
+<section class="slide" data-notes="<b>11:00 · 20 s de transición</b><ul><li>Abrir la demo con esta slide atrás. Nada de tipear largo: comandos ya pegados.</li><li>Un camino feliz + <b>una</b> falla. No más.</li><li>Si algo cuelga, pasar a la grabación de respaldo sin pedir disculpas.</li></ul>">
+  <div class="num">10</div>
+  <div class="head"><span class="kick">10</span><h2>Demo: tres momentos, cinco minutos</h2></div>
+  <div class="body">
+    <div class="cards c3">
+      <div class="card"><span class="tag">1 · el antes</span><h3>Directo se rompe</h3><p>Productor a 20/s contra un consumidor de 8/s. Timeouts, reintentos, trabajo perdido.</p><p class="hint">mirar: la deuda crece y no se recupera</p></div>
+      <div class="card"><span class="tag">2 · con broker</span><h3>Nada se pierde</h3><p>El mismo tráfico pasa por el broker. El consumidor sigue lento, pero la deuda espera.</p><p class="hint">mirar: producido − consumido = lo guardado</p></div>
+      <div class="card violet"><span class="tag">3 · la falla</span><h3>Se cae el consumidor</h3><p>Se mata un consumidor en vivo. La deuda no se pierde y otro la termina al volver.</p><p class="hint">mirar: el contador de entregados no baja</p></div>
+    </div>
+    <p style="font-size:13.5px;color:var(--muted)">Todo lo que se muestra sale del broker real, no de una simulación: los números son los que devuelve el servidor.</p>
+  </div>
+  <div class="key">Cinco minutos para ver lo que ninguna slide puede mostrar: <b>el trabajo esperando</b>.</div>
+</section>
+
+<!-- 11 -->
+<section class="slide" data-notes="<b>11:20 · 30 s</b><ul><li>Cerrar rápido y dejar la puerta abierta a preguntas.</li><li>Si preguntan por la herramienta, responder con el criterio, no con la preferencia.</li></ul>">
+  <div class="num">11</div>
+  <div class="head"><span class="kick">11</span><h2>Si te llevás tres cosas</h2></div>
+  <div class="body">
+    <div class="take">
+      <div class="card"><span class="n">01</span><h3>Desacoplar es ganar tiempo</h3><p>El broker no acerca los procesos: los libera de coincidir.</p></div>
+      <div class="card"><span class="n">02</span><h3>Difundir ≠ repartir</h3><p>Misma infraestructura, decisión distinta. Se elige por quién consume.</p></div>
+      <div class="card"><span class="n">03</span><h3>La garantía vive en tu código</h3><p>At-least-once es una obligación: sin idempotencia, el broker no te salva.</p></div>
+    </div>
+  </div>
+  <div class="key">Preguntas. <span style="color:#7e93a8;font-weight:500">Grupo 7 · Lencina · Ureta</span></div>
+</section>
+
+</div>
+
+<div class="toolbar" id="toolbar">
+  <button id="b-edit">✎ Editar</button>
+  <button id="b-save">⭳ Guardar .html</button>
+  <button id="b-reset">↺ Deshacer cambios</button>
+</div>
+
+<div class="hud">
+  <span><b id="cnt">1 / 11</b></span>
+  <span>← → · n notas · e editar</span>
+</div>
+
+<div class="notes" id="notes"></div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var stage  = document.getElementById('stage');
+  var prog   = document.getElementById('prog');
+  var cnt    = document.getElementById('cnt');
+  var notes  = document.getElementById('notes');
+  var toolbar= document.getElementById('toolbar');
+  var i = 0, editing = false;
+
+  var KEY = 'sd-g7-deck-v1';
+
+  /* ── escala: el escenario siempre entra en pantalla ── */
+  function fit(){
+    var s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  /* ── navegación ── */
+  function show(k){
+    i = Math.max(0, Math.min(slides.length - 1, k));
+    slides.forEach(function(s, n){ s.classList.toggle('on', n === i); });
+    prog.style.width = ((i + 1) / slides.length * 100) + '%';
+    cnt.textContent = (i + 1) + ' / ' + slides.length;
+    notes.innerHTML = slides[i].getAttribute('data-notes') || '<span style="color:#4a5f74">Sin notas.</span>';
+    if (location.hash !== '#' + (i + 1)) history.replaceState(null, '', '#' + (i + 1));
+  }
+  function toggleNotes(){ notes.classList.toggle('on'); }
+
+  /* ── edición en el navegador ── */
+  var editable = 'h1,h2,h3,p,li,td,th,.key,.sub,.hint';
+
+  function setEditing(on){
+    editing = on;
+    document.body.classList.toggle('editing', on);
+    toolbar.classList.toggle('on', on);
+    document.getElementById('b-edit').textContent = on ? '✓ Listo' : '✎ Editar';
+    slides.forEach(function(s){
+      s.querySelectorAll(editable).forEach(function(el){
+        el.setAttribute('contenteditable', on ? 'true' : 'false');
+        el.spellcheck = false;
+      });
+    });
+    if (on) {
+      var first = slides[i].querySelector(editable);
+      if (first) first.focus();
+    }
+  }
+
+  function persist(){
+    try {
+      var data = slides.map(function(s){ return s.innerHTML; });
+      localStorage.setItem(KEY, JSON.stringify(data));
+    } catch(e){}
+  }
+
+  function restore(){
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      var data = JSON.parse(raw);
+      if (!Array.isArray(data) || data.length !== slides.length) return;
+      slides.forEach(function(s, n){ s.innerHTML = data[n]; });
+    } catch(e){}
+  }
+
+  /* guarda mientras escribe, con un respiro */
+  var t = null;
+  document.addEventListener('input', function(){
+    if (!editing) return;
+    clearTimeout(t);
+    t = setTimeout(persist, 400);
+  });
+
+  /* ── exportar un .html con lo editado adentro ── */
+  document.getElementById('b-save').addEventListener('click', function(){
+    var clone = document.documentElement.cloneNode(true);
+    clone.querySelectorAll('[contenteditable]').forEach(function(el){ el.removeAttribute('contenteditable'); });
+    var tb = clone.querySelector('#toolbar'); if (tb) tb.classList.remove('on');
+    var bd = clone.querySelector('body'); if (bd) bd.classList.remove('editing');
+    var nt = clone.querySelector('#notes'); if (nt) nt.classList.remove('on');
+    var html = '<!DOCTYPE html>\n' + clone.outerHTML;
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([html], {type:'text/html;charset=utf-8'}));
+    a.download = 'comunicacion-indirecta.html';
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  });
+
+  document.getElementById('b-reset').addEventListener('click', function(){
+    if (!confirm('¿Descartar los cambios guardados en este navegador y volver al texto original?')) return;
+    localStorage.removeItem(KEY);
+    location.reload();
+  });
+  document.getElementById('b-edit').addEventListener('click', function(){ setEditing(!editing); });
+
+  document.addEventListener('keydown', function(e){
+    if (editing) {
+      if (e.key === 'Escape') { setEditing(false); e.preventDefault(); }
+      return;                       // mientras editás, las flechas son del cursor
+    }
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); show(i + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'Backspace'){ e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home'){ show(0); }
+    else if (e.key === 'End'){ show(slides.length - 1); }
+    else if (e.key === 'n' || e.key === 'N'){ toggleNotes(); }
+    else if (e.key === 'e' || e.key === 'E'){ setEditing(true); }
+    else if (e.key === 'f' || e.key === 'F'){
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+      else document.exitFullscreen && document.exitFullscreen();
+    }
+  });
+
+  document.addEventListener('click', function(e){
+    if (editing || e.target.closest('button')) return;
+    show(e.clientX < window.innerWidth * 0.2 ? i - 1 : i + 1);
+  });
+
+  restore();
+  var start = parseInt((location.hash || '#1').slice(1), 10);
+  show(isNaN(start) ? 0 : start - 1);
+})();
+</script>
+</body>
+</html>
