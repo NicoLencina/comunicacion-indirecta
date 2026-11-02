@@ -499,7 +499,11 @@
     prog.style.width = ((i + 1) / slides.length * 100) + '%';
     cnt.textContent = (i + 1) + ' / ' + slides.length;
     notes.innerHTML = slides[i].getAttribute('data-notes') || '<span style="color:#4a5f74">Sin notas.</span>';
-    if (location.hash !== '#' + (i + 1)) history.replaceState(null, '', '#' + (i + 1));
+    // En file:// algunos navegadores no dejan tocar el historial. No es
+    // crítico: la slide ya está pintada y sólo se pierde el #n de la URL.
+    try {
+      if (location.hash !== '#' + (i + 1)) history.replaceState(null, '', '#' + (i + 1));
+    } catch (e) { /* abierto como archivo local */ }
   }
   function toggleNotes(){ notes.classList.toggle('on'); }
 

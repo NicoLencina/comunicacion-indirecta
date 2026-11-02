@@ -19,8 +19,13 @@ sin fuentes externas.
 Abrilo con doble click, o:
 
 ```bash
-xdg-open index.html
+xdg-open index.html     # Linux
+open index.html         # macOS
+start index.html        # Windows
 ```
+
+No necesita servidor: funciona abierto como archivo local, igual que desde el
+link de GitHub Pages.
 
 | tecla | qué hace |
 |---|---|
