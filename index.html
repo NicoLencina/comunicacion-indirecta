@@ -246,7 +246,7 @@
 </section>
 
 <!-- 03 · consumidor lento -->
-<section class="slide" data-notes="<b>1:20 · 50 s</b><ul><li>Es el «antes» que pide la cátedra: el estado inicial que falla. Se muestra en vivo al inicio de la demo con sd-demo.py.</li><li>Transición: «la solución es poner un tercero que guarde los mensajes».</li></ul>">
+<section class="slide" data-notes="<b>1:20 · 50 s</b><ul><li>Es el «antes» que pide la cátedra: el estado inicial que falla. Se muestra en vivo al inicio de la demo con el ejemplo directo.</li><li>Transición: «la solución es poner un tercero que guarde los mensajes».</li></ul>">
   <div class="num">03</div>
   <div class="head"><span class="kick">03</span><h2>Qué se rompe cuando el consumidor va más lento</h2></div>
   <div class="body">
@@ -261,7 +261,7 @@
       <span class="node bad">consumidor<small>8 msg/s</small></span>
     </div>
   </div>
-  <div class="key">En este escenario el timeout lo causa el <b>velocidad</b>, no la red: dos procesos que trabajan a velocidades distintas.</div>
+  <div class="key">La causa es la <b>velocidad</b>: dos procesos a ritmos distintos. Y un timeout no confirma que el trabajo se haya perdido.</div>
 </section>
 
 <!-- 04 · el broker -->
@@ -317,6 +317,7 @@
       </tbody>
     </table>
   </div>
+  <div class="key">Grupos, pub/sub y colas son abstracciones de <b>comunicación</b>: escalan bien. DSM y tuplas son de <b>estado</b>: escalan peor porque hay que mantenerlo consistente.</div>
 </section>
 
 <!-- 06 · pub/sub y colas -->
@@ -439,15 +440,15 @@
         <tr><td>Difundir</td><td>Exchange que copia a varias colas</td><td>Un consumer group por suscriptor</td></tr>
         <tr><td>Repartir</td><td>Consumidores que compiten en una cola</td><td>Particiones repartidas dentro del grupo</td></tr>
         <tr><td>Cuándo se elimina el mensaje</td><td>Al confirmar (<span class="mono">ack</span>)</td><td>Por retención</td></tr>
-        <tr><td>Releer el pasado</td><td class="no">No: lo confirmado ya no está</td><td class="yes">Sí, moviendo el offset</td></tr>
+        <tr><td>Releer el pasado</td><td class="no">No: lo confirmado ya no está (salvo Streams)</td><td class="yes">Sí, moviendo el offset</td></tr>
         <tr><td>Durabilidad</td><td>Cola durable, mensajes persistentes; quorum queues</td><td>Réplicas por partición, <span class="mono">acks=all</span></td></tr>
-        <tr><td>Paralelismo</td><td class="yes">Sin techo fijo</td><td>Hasta el nº de particiones</td></tr>
+        <tr><td>Paralelismo</td><td>Lo limita la máquina, no un número fijo</td><td>Hasta el nº de particiones</td></tr>
         <tr><td>Orden</td><td>Por cola, con un solo consumidor</td><td>Por partición</td></tr>
         <tr><td>Ruteo</td><td>Rico: direct, fanout, topic, headers</td><td>Simple: tópico + key</td></tr>
       </tbody>
     </table>
     <div class="cards c2">
-      <div class="card"><h3>Por qué RabbitMQ en la demo</h3><p>El caso es repartir tareas y notificar eventos, con ack y reentrega por mensaje: el modo de falla se observa directamente. Un nodo liviano alcanza en la VM del TP1.</p></div>
+      <div class="card"><h3>Por qué elegimos RabbitMQ</h3><p>El caso es repartir tareas y notificar eventos, con ack y reentrega por mensaje: el modo de falla se observa directamente. Un nodo liviano alcanza en la VM del TP1.</p></div>
       <div class="card amber"><h3>Qué se paga · cuándo no</h3><p>Sin replay, orden no garantizado con varios consumidores y un solo nodo como punto único de falla. Si hace falta histórico o releer el flujo: Kafka. Si hace falta respuesta inmediata: llamada directa.</p></div>
     </div>
   </div>
@@ -468,14 +469,31 @@
       <div class="card"><h3>Idempotencia</h3><p>La red no distingue «no llegó» de «llegó y se perdió el ack». Procesar dos veces debe dejar el mismo resultado, por ejemplo deduplicando por id de mensaje.</p></div>
       <div class="card"><h3>Orden</h3><p>Se garantiza por cola con un solo consumidor, o por partición (misma key). No hay orden global, y una reentrega altera el orden de procesamiento.</p></div>
     </div>
+    <p class="hint" style="font-family:ui-monospace,monospace;font-size:12.5px;color:var(--muted)"><b style="color:#d3dee9">Durabilidad:</b> cola durable + mensajes persistentes + publisher confirms. Las quorum queues replican la cola entre nodos. Sin replay: lo confirmado se elimina.</p>
   </div>
   <div class="key">En la demo: un worker cae antes del ack y RabbitMQ reentrega la tarea. Es <b>at-least-once</b>: no se pierde, pero puede duplicarse.</div>
 </section>
 
 <!-- 11 · demo -->
-<section class="slide" data-notes="<b>10:00 · 5 min</b><ul><li>Todo precargado: broker levantado, consola en :15672 abierta, terminales listas, comandos en un archivo.</li><li>0 · antes (1 min): sd-demo.py, escenario 2, timeouts.</li><li>1 · pub/sub (1 min): un publish, los tres suscriptores lo muestran.</li><li>2 · cola (1 min 30): mismas tareas con 1 worker y con 3; comparar el tiempo total.</li><li>3 · falla (1 min 30): matar un worker con una tarea sin ack; en la consola pasa de Unacked a Ready y otro worker la recibe con redelivered = true.</li><li>Si algo falla, pasar al video de respaldo.</li></ul>">
+<section class="slide" data-notes="<b>10:00 · 20 s de transición, después 5 min de demo</b><ul><li>Todo precargado: pared local abierta en 127.0.0.1:7000, broker arriba y los atajos a mano. Nada de tipear largo.</li><li><b>Directa (1 min):</b> <code>p1 5</code> sin consumidor y después con <code>c1</code>; al final <code>c1 --ms 1500</code> para el timeout.</li><li><b>Broker (1 min 30):</b> repartir con <code>c2 2 repartir</code> y <code>p2 20 repartir</code>; cortar los consumidores con ■ y ver crecer la deuda; sumar consumidores y verla bajar; después difundir.</li><li><b>Saturación (1 min 30):</b> <code>p2 saturar</code> llena la cola de 100 mensajes; al llegar al techo deja de aceptar y el productor queda bloqueado. Después <code>c2 saturar</code> para drenar y ver que sigue.</li><li><b>Reentrega (50 s):</b> <code>c3 --caida-en 3</code> y volver a levantarlo con <code>c3</code>.</li><li>Si algo falla, pasar a la grabación de respaldo sin intentar arreglarlo en vivo.</li></ul>">
   <div class="num">11</div>
-  <div class="head"><span class="kick">11</span><h2>Demo: RabbitMQ sobre la VM del TP1</h2></div>
+  <div class="head"><span class="kick">11</span><h2>Demo: cuatro momentos, cinco minutos</h2></div>
+  <div class="body">
+    <div class="cards c2">
+      <div class="card"><span class="tag">1 · el antes</span><h3>Directa, sin nadie del otro lado</h3><p>El productor conoce la dirección, pero si el consumidor no está, no hay dónde dejar el trabajo. Y si tarda, la respuesta llega tarde.</p><p class="hint">mirar: el error en rojo y el productor clavado</p></div>
+      <div class="card"><span class="tag">2 · con broker</span><h3>Repartir y difundir</h3><p>Una cola reparte entre workers; un exchange manda una copia a cada suscriptor. La deuda de la banda es el trabajo esperando.</p><p class="hint">mirar: la deuda subir y bajar</p></div>
+      <div class="card amber"><span class="tag">3 · la saturación</span><h3>El broker también se llena</h3><p>Sin consumidores la cola se llena. Tiene un techo de 100 mensajes: al llegar, Rabbit deja de aceptar y el productor queda bloqueado.</p><p class="hint">mirar: el tanque en 100 y el productor clavado</p></div>
+      <div class="card violet"><span class="tag">4 · la falla</span><h3>Reentrega</h3><p>El consumidor cae antes de confirmar. Al volver, RabbitMQ entrega el mensaje otra vez.</p><p class="hint">mirar: el mismo número vuelve</p></div>
+    </div>
+    <p style="font-size:13.5px;color:var(--muted)">Las llamadas directas no usan broker; el resto se observa en RabbitMQ, con la deuda de la cola y el bloqueo del productor en la banda.</p>
+  </div>
+  <div class="key">Cinco minutos para ver lo que ninguna slide puede mostrar: <b>el trabajo esperando</b> y hasta dónde aguanta el broker.</div>
+</section>
+
+<!-- 12 · cierre -->
+<section class="slide" data-notes="<b>15:00 · 30 s</b><ul><li>Cerrar rápido y dejar la puerta abierta a preguntas.</li><li>Si preguntan por la herramienta, responder con el criterio, no con la preferencia.</li></ul>">
+  <div class="num">12</div>
+  <div class="head"><span class="kick">12</span><h2>Si te llevás tres cosas</h2></div>
   <div class="body">
     <div class="cards c2">
       <div class="card"><span class="tag">0 · el antes · sd-demo.py</span><h3>Comunicación directa</h3><p>Productor y consumidor por HTTP, sin broker. Al bajar la velocidad del consumidor aparecen los timeouts.</p><p class="hint">mirar: timeouts del productor vs deuda del consumidor</p></div>
@@ -496,7 +514,7 @@
 </div>
 
 <div class="hud">
-  <span><b id="cnt">1 / 11</b></span>
+  <span><b id="cnt">1 / 12</b></span>
   <span>← → · n notas · e editar</span>
 </div>
 
@@ -528,7 +546,11 @@
     prog.style.width = ((i + 1) / slides.length * 100) + '%';
     cnt.textContent = (i + 1) + ' / ' + slides.length;
     notes.innerHTML = slides[i].getAttribute('data-notes') || '<span style="color:#4a5f74">Sin notas.</span>';
-    if (location.hash !== '#' + (i + 1)) history.replaceState(null, '', '#' + (i + 1));
+    // Con file:// algunos navegadores no dejan tocar el historial: la slide ya
+    // está pintada y solo se pierde el #n de la URL, así que no corta la demo.
+    try {
+      if (location.hash !== '#' + (i + 1)) history.replaceState(null, '', '#' + (i + 1));
+    } catch (e) { /* abierto como archivo local */ }
   }
   function toggleNotes(){ notes.classList.toggle('on'); }
 
