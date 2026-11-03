@@ -142,7 +142,6 @@
   th{color:var(--muted);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
   td:first-child{font-weight:650;color:#fff}
   table.dense td,table.dense th{padding:8px 12px}
-  #s07 td,#s07 th{padding:6px 12px}
   .yes{color:var(--mint);font-weight:700}
   .no{color:var(--amber);font-weight:700}
 
@@ -358,10 +357,10 @@
 </section>
 
 <!-- 07 · RabbitMQ -->
-<section id="s07" class="slide" style="padding:40px 76px 26px" data-notes="<b>5:00 · 1 min 15</b><ul><li>Es la herramienta del TP6 y la de la demo.</li><li>Recorrer el ejemplo con el dedo: se publica con routing key stock.NYSE.ibm; el binding stock.NYSE.* lo manda a la cola A, y el binding stock.# también lo manda a la cola B. Las dos reciben copia: eso es difundir.</li><li>El binding es una regla guardada en el broker: no viaja con el mensaje. La routing key sí viaja, la escribe el productor.</li><li>fanout ignora la routing key y copia a todas las colas bindeadas a ese exchange, no a todas las colas del broker.</li><li>Durabilidad: son tres protecciones contra tres accidentes distintos. Si falta una, se pierde igual. Y todavía falta el ack del consumidor.</li><li>Respuesta del TP6: un mensaje sin binding que coincida se descarta en silencio, salvo mandatory o alternate exchange.</li><li>Transición: «en RabbitMQ el mensaje se borra al confirmar. Kafka resuelve los mismos patrones sin borrar».</li></ul>">
+<section id="s07" class="slide" data-notes="<b>5:00 · 1 min 15</b><ul><li>Es la herramienta del TP6 y la de la demo.</li><li>Recorrer el ejemplo con el dedo: se publica con routing key stock.NYSE.ibm; el binding stock.NYSE.* lo manda a la cola A, y el binding stock.# también lo manda a la cola B. Las dos reciben copia: eso es difundir.</li><li>El binding es una regla guardada en el broker: no viaja con el mensaje. La routing key sí viaja, la escribe el productor.</li><li>fanout ignora la routing key y copia a todas las colas bindeadas a ese exchange, no a todas las colas del broker.</li><li>Durabilidad: son tres protecciones contra tres accidentes distintos. Si falta una, se pierde igual. Y todavía falta el ack del consumidor.</li><li>Respuesta del TP6: un mensaje sin binding que coincida se descarta en silencio, salvo mandatory o alternate exchange.</li><li>Transición: «en RabbitMQ el mensaje se borra al confirmar. Kafka resuelve los mismos patrones sin borrar».</li></ul>">
   <div class="num">07</div>
   <div class="head"><span class="kick">07</span><h2>RabbitMQ: exchanges, colas y ack</h2></div>
-  <div class="body" style="gap:10px;padding:0">
+  <div class="body" style="gap:20px">
     <div class="flow">
       <span class="node p">publisher</span><span class="arrow"></span>
       <span class="node b">exchange<small>routing key</small></span><span class="arrow"></span>
@@ -369,12 +368,7 @@
       <span class="stack"><span class="node c sm">consumidores de A</span><span class="node c sm">consumidores de B</span></span>
     </div>
 
-    <table class="dense">
-      <tr><th style="width:44%">binding declarado en el broker</th><th>¿matchea la routing key <span class="mono">stock.NYSE.ibm</span>?</th></tr>
-      <tr><td class="mono">stock.NYSE.* → cola A</td><td><span class="yes">✓ sí</span> · <span class="mono">*</span> es una palabra, y es <span class="mono">NYSE</span></td></tr>
-      <tr><td class="mono">stock.# → cola B</td><td><span class="yes">✓ sí</span> · <span class="mono">#</span> son cero o más palabras</td></tr>
-      <tr><td class="mono">stock.NASDAQ.* → cola C</td><td><span class="no">✗ no</span> · la segunda palabra no es <span class="mono">NASDAQ</span></td></tr>
-    </table>
+    <p class="hint" style="text-align:center;font-size:12.5px">Con routing key <span class="mono" style="color:#d3dee9">stock.NYSE.ibm</span>: el binding <span class="mono">stock.NYSE.*</span> la deja en la <b style="color:#d3dee9">cola A</b> <span class="yes">✓</span> y <span class="mono">stock.#</span> también en la <b style="color:#d3dee9">cola B</b> <span class="yes">✓</span>. Un binding <span class="mono">stock.NASDAQ.*</span> no matchea <span class="no">✗</span></p>
 
     <div class="cards c2">
       <div class="card violet"><h3>Difundir: el exchange copia</h3>
