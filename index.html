@@ -65,15 +65,22 @@
   .body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px;min-height:0;padding:18px 0}
 
   .key{
-    flex:none;display:flex;gap:14px;align-items:baseline;
+    flex:none;display:block;
     border-left:3px solid var(--mint);padding:10px 0 10px 16px;
     background:linear-gradient(90deg,rgba(53,224,196,.06),transparent 68%);
     font-size:19px;line-height:1.35;font-weight:600;color:#d6f7f1;
   }
   .key b{color:var(--mint);font-weight:750}
 
+  .def{
+    border:1px solid var(--line);border-radius:12px;padding:14px 18px;background:var(--surface);
+    font-size:17px;line-height:1.45;color:#d3dee9;
+  }
+  .def b{color:var(--mint)}
+
   /* ── piezas ── */
   .flow{display:flex;align-items:center;justify-content:center;gap:12px}
+  .stack{display:flex;flex-direction:column;gap:6px}
   .node{
     border:1px solid var(--line);border-radius:11px;background:var(--surface);
     padding:9px 16px;font-size:15px;font-weight:680;white-space:nowrap;text-align:center;
@@ -83,10 +90,12 @@
   .node.b{border-color:#2c6a5f;background:#0a2420;color:#8df2e2}
   .node.c{border-color:#3d3568;color:#cabfff}
   .node.bad{border-color:#5e2e29;background:#1a100f;color:#ffb4ad}
+  .node.sm{font-size:12px;padding:6px 11px}
   .arrow{width:54px;height:1.5px;background:#334455;position:relative;flex:none}
   .arrow::after{content:"";position:absolute;right:0;top:-4px;
     border-left:8px solid #334455;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent}
   .arrow.hot{background:var(--red)}.arrow.hot::after{border-left-color:var(--red)}
+  .arrow.s{width:28px}
 
   .cards{display:grid;gap:16px}
   .cards.c2{grid-template-columns:1fr 1fr}
@@ -112,6 +121,9 @@
   li::before{content:"";position:absolute;left:0;top:.55em;width:6px;height:6px;border-radius:2px;background:var(--mint)}
   ul.warn li::before{background:var(--amber)}
   ul.calm li::before{background:var(--muted)}
+  ul.vio li::before{background:var(--violet)}
+  ul.tight{gap:7px}
+  ul.tight li{font-size:14px;line-height:1.4;padding-left:16px}
   li b{color:#fff;font-weight:680}
 
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}
@@ -129,6 +141,7 @@
   th,td{text-align:left;padding:11px 12px;font-size:14.5px;border-bottom:1px solid var(--line);vertical-align:top}
   th{color:var(--muted);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
   td:first-child{font-weight:650;color:#fff}
+  table.dense td,table.dense th{padding:8px 12px}
   .yes{color:var(--mint);font-weight:700}
   .no{color:var(--amber);font-weight:700}
 
@@ -166,13 +179,10 @@
   }
   .toolbar button:hover{border-color:var(--mint);color:var(--mint)}
 
-  #editing [contenteditable="true"],body.editing .slide :is(h1,h2,h3,p,li,td,th,span,div.key,.sub){
-    outline:1px dashed transparent;outline-offset:3px;
+  body.editing .slide :is(h1,h2,h3,p,li,td,th,.key,.sub,.def){
+    outline:1px dashed #2c4256;outline-offset:3px;cursor:text;
   }
-  body.editing .slide :is(h1,h2,h3,p,li,td,th,.key,.sub){
-    outline-color:#2c4256;cursor:text;
-  }
-  body.editing .slide :is(h1,h2,h3,p,li,td,th,.key,.sub):focus{
+  body.editing .slide :is(h1,h2,h3,p,li,td,th,.key,.sub,.def):focus{
     outline-color:var(--mint);background:rgba(53,224,196,.04);
   }
 
@@ -202,13 +212,13 @@
 <div class="prog" id="prog"></div>
 <div id="stage">
 
-<!-- 01 -->
-<section class="slide on" data-notes="<b>0:00 · 20 s</b><ul><li>Quiénes y una frase de qué van a ver.</li><li>Arrancar por el problema, no por la herramienta: «dos programas que necesitan estar vivos al mismo tiempo».</li></ul>">
+<!-- 01 · portada -->
+<section class="slide on" data-notes="<b>0:00 · 20 s</b><ul><li>Quiénes somos y qué se va a ver: el problema de la comunicación directa, los paradigmas indirectos, RabbitMQ y Kafka, las garantías de entrega y una demo con RabbitMQ.</li></ul>">
   <div class="num">01</div>
   <div class="cover">
     <div class="bar"></div>
     <h1>Comunicación<br>indirecta</h1>
-    <p class="sub">Qué gana un sistema cuando en el medio aparece un tercero que guarda los mensajes.</p>
+    <p class="sub">Qué gana un sistema cuando en el medio aparece un intermediario que guarda los mensajes.</p>
     <div class="meta">
       <span><b>Grupo 7</b> · orden 3</span>
       <span>Lencina · Ureta</span>
@@ -217,32 +227,33 @@
   </div>
 </section>
 
-<!-- 02 -->
-<section class="slide" data-notes="<b>0:20 · 1 min</b><ul><li>No definir «broker» todavía. El objetivo es que quede el problema.</li><li>Tres cadenas: si cortás una, la llamada directa ya no sirve.</li></ul>">
+<!-- 02 · acoplamientos -->
+<section class="slide" data-notes="<b>0:20 · 1 min</b><ul><li>Dar la definición de Coulouris antes de nombrar el broker.</li><li>Coulouris define dos acoplamientos: espacial y temporal. El de sincronización lo agregan Eugster et al. (y aparece en las características de pub/sub de la cátedra).</li><li>Transición: «veamos qué pasa en la práctica cuando uno de los dos va más lento».</li></ul>">
   <div class="num">02</div>
   <div class="head"><span class="kick">02</span><h2>Toda llamada directa carga con tres acoplamientos</h2></div>
   <div class="body">
+    <div class="def"><b>Comunicación indirecta</b> (Coulouris, cap. 6): comunicación entre entidades a través de un intermediario, sin acoplamiento directo entre el emisor y el o los receptores.</div>
     <div class="cards c3">
-      <div class="card"><span class="tag">espacio</span><h3>Tiene que saber dónde está</h3><p>Para llamar hay que conocer la dirección del otro. Si se muda, el que llama se rompe.</p></div>
-      <div class="card"><span class="tag">tiempo</span><h3>Tienen que estar vivos</h3><p>Los dos, en el mismo instante. Si el que atiende se cayó, la llamada no existe.</p></div>
-      <div class="card"><span class="tag">ritmo</span><h3>Tienen que ir igual</h3><p>El que llama espera. Si el otro tarda más, alguien se cansa y corta.</p></div>
+      <div class="card"><span class="tag">espacio</span><h3>Tiene que saber dónde está</h3><p>Para llamar hay que conocer la dirección del otro. Si cambia de ubicación, el que llama falla.</p><p class="hint">acoplamiento espacial</p></div>
+      <div class="card"><span class="tag">tiempo</span><h3>Tienen que estar activos</h3><p>Los dos, en el mismo instante. Si el receptor está caído, la llamada falla.</p><p class="hint">acoplamiento temporal</p></div>
+      <div class="card amber"><span class="tag">sincronización</span><h3>Tienen que ir a la misma velocidad</h3><p>El que llama queda bloqueado esperando. Si el otro tarda, vence el timeout.</p><p class="hint">acoplamiento de sincronización</p></div>
     </div>
-    <div class="flow" style="margin-top:6px">
+    <div class="flow" style="margin-top:2px">
       <span class="node p">proceso A</span><span class="arrow"></span><span class="node c">proceso B</span>
     </div>
   </div>
-  <div class="key">Llamar directo te obliga a las tres cosas <b>a la vez</b>: saber la dirección, estar vivos juntos, ir a la misma velocidad.</div>
+  <div class="key">La llamada directa exige las tres cosas a la vez: <b>dirección, presencia y velocidad.</b></div>
 </section>
 
-<!-- 03 -->
-<section class="slide" data-notes="<b>1:20 · 1 min 20</b><ul><li>Este es el «antes» que pide la cátedra: mostrar el estado inicial roto.</li><li>Timeout no es lentitud: es que los dos acordaron cosas distintas.</li></ul>">
+<!-- 03 · consumidor lento -->
+<section class="slide" data-notes="<b>1:20 · 50 s</b><ul><li>Es el «antes» que pide la cátedra: el estado inicial que falla. Se muestra en vivo al inicio de la demo con el ejemplo directo.</li><li>Transición: «la solución es poner un tercero que guarde los mensajes».</li></ul>">
   <div class="num">03</div>
   <div class="head"><span class="kick">03</span><h2>Qué se rompe cuando el consumidor va más lento</h2></div>
   <div class="body">
     <div class="cards c3">
-      <div class="card"><span class="tag">slow consumer</span><h3>Timeouts en cascada</h3><p>El que llama espera, se cansa y corta. El otro sigue trabajando para un pedido que ya nadie escucha.</p></div>
-      <div class="card amber"><span class="tag">retry</span><h3>Reintentos que hunden</h3><p>Cada timeout genera más pedidos sobre un sistema que ya no daba abasto. El problema se multiplica solo.</p></div>
-      <div class="card"><span class="tag">down</span><h3>Trabajo perdido</h3><p>Si el consumidor se cae, el pedido no existe en ningún lado. No hay de dónde recuperarlo.</p></div>
+      <div class="card"><span class="tag">slow consumer</span><h3>Timeouts en cascada</h3><p>El emisor deja de esperar y corta. El receptor sigue procesando un pedido cuya respuesta ya nadie espera.</p></div>
+      <div class="card amber"><span class="tag">retry</span><h3>Reintentos que agravan</h3><p>Cada timeout genera nuevos pedidos sobre un receptor que ya estaba saturado.</p></div>
+      <div class="card"><span class="tag">down</span><h3>Trabajo perdido</h3><p>Si el receptor se cae, los pedidos que tenía en memoria se pierden. No hay de dónde recuperarlos.</p></div>
     </div>
     <div class="flow" style="margin-top:6px">
       <span class="node p">productor<small>20 msg/s</small></span>
@@ -250,14 +261,14 @@
       <span class="node bad">consumidor<small>8 msg/s</small></span>
     </div>
   </div>
-  <div class="key">Un timeout no es un problema de red: es un <b>desacuerdo de ritmo</b> entre dos procesos.</div>
+  <div class="key">La causa es la <b>velocidad</b>: dos procesos a ritmos distintos. Y un timeout no confirma que el trabajo se haya perdido.</div>
 </section>
 
-<!-- 04 -->
-<section class="slide" data-notes="<b>2:40 · 1 min 20</b><ul><li>El broker se presenta como <b>memoria</b>, no como mensajero. Ese es el punto.</li><li>Desacoplar no es que no se necesiten: es que dejan de necesitarse al mismo tiempo.</li><li>Ojo con lo que se paga: el mensaje ahora vive en un tercer lugar.</li></ul>">
+<!-- 04 · el broker -->
+<section class="slide" data-notes="<b>2:10 · 50 s</b><ul><li>El broker guarda el mensaje: eso es lo que da el desacople temporal.</li><li>Asincronía ≠ desacople temporal: confusión típica de examen.</li><li>IP multicast desacopla en espacio pero no en tiempo: la indirección no implica los dos desacoples.</li><li>Para qué se usa (Coulouris): sistemas donde se anticipan cambios (móviles, conexiones intermitentes) y difusión de eventos a receptores desconocidos o cambiantes.</li><li>Transición: «hay varias formas de armar ese intermediario».</li></ul>">
   <div class="num">04</div>
-  <div class="head"><span class="kick">04</span><h2>El broker es un tercero que guarda</h2></div>
-  <div class="body">
+  <div class="head"><span class="kick">04</span><h2>El broker: un intermediario que guarda los mensajes</h2></div>
+  <div class="body" style="gap:16px">
     <div class="flow">
       <span class="node p">productor</span><span class="arrow"></span>
       <span class="node b">broker<small>retiene</small></span><span class="arrow"></span>
@@ -265,61 +276,127 @@
     </div>
     <div class="cards c2">
       <div class="card"><h3>Lo que se gana</h3>
-        <ul>
-          <li><b>Espacio:</b> el productor no sabe dónde está el consumidor.</li>
-          <li><b>Tiempo:</b> puede publicar con el consumidor apagado.</li>
-          <li><b>Ritmo:</b> nadie espera a nadie.</li>
+        <ul class="tight">
+          <li><b>Espacio:</b> el productor no conoce al consumidor.</li>
+          <li><b>Tiempo:</b> se puede publicar con el consumidor apagado.</li>
+          <li><b>Sincronización:</b> el productor no se bloquea al enviar.</li>
         </ul>
+        <p class="hint">Asincronía (no bloquearse al enviar) ≠ desacople temporal (el receptor puede no existir al momento del envío).</p>
       </div>
       <div class="card amber"><h3>Lo que se paga</h3>
-        <ul class="warn">
-          <li>Un salto más de latencia.</li>
+        <ul class="warn tight">
+          <li>Un salto más de latencia por mensaje.</li>
           <li>Un servicio más que operar y monitorear.</li>
-          <li>Datos vivos en otro lado: respaldo, retención, permisos.</li>
+          <li>Un componente crítico: si cae, cae la comunicación.</li>
         </ul>
       </div>
     </div>
+    <table class="dense">
+      <thead><tr><th></th><th>Desacople en espacio</th><th>Desacople en tiempo</th></tr></thead>
+      <tbody>
+        <tr><td>Broker con persistencia</td><td class="yes">Sí</td><td class="yes">Sí: guarda el mensaje</td></tr>
+        <tr><td>IP multicast</td><td class="yes">Sí</td><td class="no">No: los receptores deben estar activos</td></tr>
+      </tbody>
+    </table>
   </div>
-  <div class="key">El broker no hace la comunicación más rápida. La hace <b>independiente en el tiempo</b>.</div>
+  <div class="key">El broker no elimina el problema de velocidad: lo convierte en <b>backlog</b>. Se resuelve sumando consumidores.</div>
 </section>
 
-<!-- 05 -->
-<section class="slide" data-notes="<b>4:00 · 1 min 30</b><ul><li>Este es el eje que la cátedra dice que se evalúa: distinguir difundir de repartir.</li><li>Misma plomería, decisión distinta. No es la herramienta: es quién está del otro lado.</li><li>Pregunta típica: «¿y si agrego otro consumer en pub/sub?» → recibe todo también.</li></ul>">
+<!-- 05 · paradigmas -->
+<section class="slide" data-notes="<b>3:00 · 45 s</b><ul><li>Ubicar el tema en los cuatro paradigmas de la cátedra. Memoria compartida agrupa DSM y espacios de tuplas.</li><li>Las abstracciones basadas en comunicación escalan mejor que las basadas en estado, porque estas deben mantener el estado consistente.</li><li>Transición: «de los cuatro, los que implementan RabbitMQ y Kafka son pub/sub y colas».</li></ul>">
   <div class="num">05</div>
-  <div class="head"><span class="kick">05</span><h2>Difundir no es repartir</h2></div>
+  <div class="head"><span class="kick">05</span><h2>Cuatro paradigmas de comunicación indirecta</h2></div>
+  <div class="body">
+    <table>
+      <thead><tr><th>Paradigma</th><th>Cardinalidad</th><th>Quién recibe</th><th>Desacople temporal</th><th>Cómo se direcciona</th></tr></thead>
+      <tbody>
+        <tr><td>Grupos</td><td>1-a-N</td><td>Todos los miembros del grupo</td><td>Según la implementación; IP multicast no lo tiene</td><td>Identificador de grupo</td></tr>
+        <tr><td>Pub/sub</td><td>1-a-N</td><td>Los suscriptores cuyo filtro coincide</td><td>Según la implementación; con persistencia, sí</td><td>Canal, tópico, contenido o tipo</td></tr>
+        <tr><td>Colas (MOM)</td><td>1-a-1</td><td>Un solo consumidor; compiten</td><td class="yes">Siempre: persistencia</td><td>Nombre de la cola</td></tr>
+        <tr><td>Memoria compartida</td><td>Acceso común al dato</td><td>Quien lea el dato (DSM) o la tupla (read / take)</td><td class="yes">Siempre: el dato persiste</td><td>Por dirección (DSM) o por contenido (tuplas)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="key">Grupos, pub/sub y colas son abstracciones de <b>comunicación</b>: escalan bien. DSM y tuplas son de <b>estado</b>: escalan peor porque hay que mantenerlo consistente.</div>
+</section>
+
+<!-- 06 · pub/sub y colas -->
+<section class="slide" data-notes="<b>3:45 · 1 min 15</b><ul><li>Es la distinción que evalúa la cátedra: difundir vs repartir.</li><li>Pub/sub: características según Coulouris, heterogeneidad (componentes no diseñados para interoperar) y asincronía.</li><li>Colas: la cola es una entidad explícita de terceros, a diferencia de las colas implícitas del paso de mensajes. Eso es lo que da el desacople.</li><li>Transición: «veamos cómo RabbitMQ resuelve los dos patrones».</li></ul>">
+  <div class="num">06</div>
+  <div class="head"><span class="kick">06</span><h2>Pub/sub y colas de mensajes</h2></div>
   <div class="body">
     <div class="cards c2">
-      <div class="card violet"><span class="tag">pub / sub · 1 → N</span><h3>Un evento llega a todos</h3>
-        <div class="flow" style="justify-content:flex-start;margin:6px 0">
-          <span class="node p" style="font-size:12px;padding:6px 10px">evento</span><span class="arrow" style="width:30px"></span>
-          <span class="node c" style="font-size:12px;padding:6px 12px">A</span>
-          <span class="node c" style="font-size:12px;padding:6px 12px">B</span>
-          <span class="node c" style="font-size:12px;padding:6px 12px">C</span>
+      <div class="card violet"><span class="tag">pub / sub · 1 → N</span><h3>Difundir: un evento a todos los interesados</h3>
+        <div class="flow" style="justify-content:flex-start;margin:4px 0">
+          <span class="node p sm">evento</span><span class="arrow s"></span>
+          <span class="node c sm">A</span><span class="node c sm">B</span><span class="node c sm">C</span>
         </div>
-        <p>Cada suscriptor necesita enterarse. Sumar uno <b>no</b> acelera: suma otro que hace lo mismo.</p>
+        <ul class="vio tight">
+          <li><b>Semántica de evento:</b> «algo ocurrió». Sumar suscriptores no acelera: agrega receptores.</li>
+          <li><b>Primitivas:</b> <span class="mono">publish(e)</span>, <span class="mono">subscribe(f)</span> / <span class="mono">unsubscribe(f)</span> con filtro, <span class="mono">notify(e)</span>; opcional <span class="mono">advertise(f)</span>.</li>
+          <li><b>Suscripción</b>, de menor a mayor expresividad: canal, tópico, contenido, tipo.</li>
+          <li><b>Desacople temporal:</b> depende de que el broker persista.</li>
+        </ul>
       </div>
-      <div class="card"><span class="tag">cola de trabajo · 1 → 1</span><h3>Cada tarea la toma uno</h3>
-        <div class="flow" style="justify-content:flex-start;margin:6px 0">
-          <span class="node p" style="font-size:12px;padding:6px 10px">tarea</span><span class="arrow" style="width:26px"></span>
-          <span class="node b" style="font-size:12px;padding:6px 10px">cola</span><span class="arrow" style="width:26px"></span>
-          <span class="node c" style="font-size:12px;padding:6px 12px">A</span>
-          <span class="node c" style="font-size:12px;padding:6px 12px">B</span>
+      <div class="card"><span class="tag">cola de mensajes · 1 → 1</span><h3>Repartir: cada tarea la toma un solo consumidor</h3>
+        <div class="flow" style="justify-content:flex-start;margin:4px 0">
+          <span class="node p sm">tarea</span><span class="arrow s"></span>
+          <span class="node b sm">cola</span><span class="arrow s"></span>
+          <span class="node c sm">A</span><span class="node c sm">B</span>
         </div>
-        <p>La tarea se resuelve una sola vez. Sumar un worker <b>sí</b> reparte la carga y acelera.</p>
+        <ul class="tight">
+          <li><b>Semántica de tarea:</b> «hacé esto». Sumar consumidores reparte la carga.</li>
+          <li><b>Recepción:</b> bloqueante, no bloqueante (polling) o por notificación.</li>
+          <li><b>Política:</b> FIFO, con prioridades y selección por propiedades.</li>
+          <li><b>Persistencia:</b> el mensaje espera hasta ser consumido; desacople temporal siempre.</li>
+        </ul>
       </div>
     </div>
   </div>
   <div class="key">La misma plomería, dos decisiones: ¿este mensaje lo necesitan <b>todos</b> o lo resuelve <b>uno</b>?</div>
 </section>
 
-<!-- 06 -->
-<section class="slide" data-notes="<b>5:30 · 1 min 20</b><ul><li>Kafka no es una cola: es un <b>log</b>. Nadie borra.</li><li>El log resuelve los dos patrones con una sola estructura.</li><li>Trampa: con una sola partición, el segundo consumer del grupo queda ocioso.</li></ul>">
-  <div class="num">06</div>
-  <div class="head"><span class="kick">06</span><h2>Kafka: un log, no una cola</h2></div>
+<!-- 07 · RabbitMQ -->
+<section class="slide" data-notes="<b>5:00 · 1 min 15</b><ul><li>Es la herramienta del TP6 y la de la demo.</li><li>Durabilidad: para que el mensaje sobreviva a una caída del broker, la cola debe ser durable y el mensaje persistente; los publisher confirms le avisan al productor que el broker lo guardó.</li><li>Los dos patrones con piezas distintas: el exchange difunde (una cola por suscriptor), la cola reparte (consumidores que compiten).</li><li>Respuesta del TP6: un mensaje sin binding que coincida se descarta, salvo mandatory o alternate exchange.</li><li>Transición: «en RabbitMQ el mensaje se borra al confirmar. Kafka resuelve los mismos patrones sin borrar».</li></ul>">
+  <div class="num">07</div>
+  <div class="head"><span class="kick">07</span><h2>RabbitMQ: exchanges, colas y ack</h2></div>
   <div class="body">
-    <div class="cards c2" style="grid-template-columns:1.15fr 1fr">
+    <div class="flow">
+      <span class="node p">publisher</span><span class="arrow"></span>
+      <span class="node b">exchange<small>routing key</small></span><span class="arrow"></span>
+      <span class="stack"><span class="node b sm">cola A · binding stock.NYSE.*</span><span class="node b sm">cola B · binding stock.#</span></span><span class="arrow"></span>
+      <span class="stack"><span class="node c sm">consumidores de A</span><span class="node c sm">consumidores de B</span></span>
+    </div>
+    <div class="cards c2">
+      <div class="card violet"><h3>Difundir: el exchange copia</h3>
+        <ul class="vio tight">
+          <li>Copia el mensaje a cada cola cuyo binding coincide con la routing key.</li>
+          <li><b>direct:</b> key exacta · <b>fanout:</b> todas las colas · <b>topic:</b> patrones, <span class="mono">*</span> una palabra, <span class="mono">#</span> cero o más.</li>
+          <li>Sin binding que coincida, el mensaje se <b>descarta</b> (salvo <span class="mono">mandatory</span> o alternate exchange).</li>
+        </ul>
+      </div>
+      <div class="card"><h3>Repartir: la cola compite</h3>
+        <ul class="tight">
+          <li>Varios consumidores de una misma cola compiten: cada mensaje lo recibe uno.</li>
+          <li><b>Ack manual:</b> al confirmar, el broker elimina el mensaje. Sin ack (consumidor caído), lo <b>reentrega</b> a otro.</li>
+          <li><b>prefetch = 1:</b> un mensaje sin confirmar por consumidor (fair dispatch).</li>
+          <li>Recepción: <span class="mono">basic.consume</span> (push) o <span class="mono">basic.get</span> (polling).</li>
+        </ul>
+      </div>
+    </div>
+    <p class="hint" style="font-family:ui-monospace,monospace;font-size:12.5px;color:var(--muted)"><b style="color:#d3dee9">Durabilidad:</b> cola durable + mensajes persistentes + publisher confirms. Las quorum queues replican la cola entre nodos. Sin replay: lo confirmado se elimina.</p>
+  </div>
+  <div class="key">El <b>exchange</b> difunde y la <b>cola</b> reparte. El mensaje se elimina al confirmarse.</div>
+</section>
+
+<!-- 08 · Kafka -->
+<section class="slide" data-notes="<b>6:15 · 1 min 15</b><ul><li>Es el plus de la exposición: el TP6 no cubría logs ni offsets.</li><li>El offset se guarda en el tópico interno __consumer_offsets.</li><li>Replay: --to-earliest, --to-offset o --to-datetime. Un grupo nuevo arranca según auto.offset.reset (por defecto, desde el final). Usos: reprocesar tras corregir un bug, sumar un consumidor que lea el histórico.</li><li>Durabilidad: con min.insync.replicas, si no hay suficientes réplicas sincronizadas la escritura falla en vez de perder datos.</li><li>Rebalanceo: si un consumidor cae, sus particiones se reasignan a los demás del grupo.</li><li>Relación con Coulouris: la estrategia rendezvous de pub/sub distribuido particiona el espacio de eventos entre brokers; las particiones de Kafka repartidas entre brokers siguen esa idea.</li><li>Transición: «comparemos las dos herramientas».</li></ul>">
+  <div class="num">08</div>
+  <div class="head"><span class="kick">08</span><h2>Kafka: log particionado y consumer groups</h2></div>
+  <div class="body">
+    <div class="cards c2" style="grid-template-columns:1fr 1.1fr">
       <div class="card">
-        <span class="tag">tópico pedidos · 3 particiones</span>
+        <span class="tag">tópico pagos · 3 particiones</span>
         <div class="log" style="margin-top:4px">
           <div class="track"><span class="pid">P0</span><div class="cells">
             <i class="cell on"></i><i class="cell on"></i><i class="cell on"></i><i class="cell cur"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i></div></div>
@@ -328,126 +405,95 @@
           <div class="track"><span class="pid">P2</span><div class="cells">
             <i class="cell on"></i><i class="cell on"></i><i class="cell cur"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i><i class="cell"></i></div></div>
         </div>
-        <p class="hint" style="font-size:11.5px">verde = escrito y leído · mint = offset actual · gris = escrito y sin leer</p>
-        <p>Lo gris no está vacío: sigue ahí, esperando. Nada se borra al leer.</p>
+        <p class="hint">verde = leído por el grupo · mint = offset actual · gris = escrito, sin leer</p>
+        <p>Leer no borra: los mensajes se retienen por tiempo o tamaño.</p>
+        <div class="flow" style="justify-content:flex-start;margin-top:6px;gap:8px">
+          <span class="node b sm">grupo procesadores<small>C1 ← P0, P1 · C2 ← P2</small></span>
+          <span class="node c sm">grupo auditoría<small>A1 ← P0, P1, P2</small></span>
+        </div>
       </div>
       <div class="card">
-        <h3>Qué es cada cosa</h3>
-        <ul>
-          <li><b>Log:</b> se agrega al final; se retiene por tiempo o tamaño.</li>
-          <li><b>Offset:</b> cada consumidor guarda hasta dónde leyó.</li>
-          <li><b>Consumer group:</b> decide si es difundir o repartir.</li>
+        <h3>Conceptos</h3>
+        <ul class="tight">
+          <li><b>Partición:</b> log append-only; unidad de paralelismo y de orden.</li>
+          <li><b>Offset:</b> posición en la partición. Cada <b>consumer group</b> guarda el suyo, por partición.</li>
+          <li><b>Mismo grupo:</b> cada partición la lee un solo consumidor → repartir.</li>
+          <li><b>Grupos distintos:</b> cada uno lee todo el tópico → difundir.</li>
+          <li><b>Key:</b> la partición se elige por <span class="mono">hash(key)</span>; misma key, misma partición.</li>
+          <li><b>Límite:</b> consumidores activos por grupo ≤ particiones.</li>
+          <li><b>Replay:</b> un grupo mueve su offset hacia atrás (<span class="mono">--reset-offsets</span>, grupo inactivo) y relee, dentro de la retención.</li>
+          <li><b>Durabilidad:</b> cada partición tiene líder y réplicas; con <span class="mono">acks=all</span> la escritura se confirma recién replicada.</li>
         </ul>
-        <div class="dash"><h3>El techo está en las particiones</h3><p>Un consumidor por partición, como máximo. Con una sola, el segundo del grupo queda mirando.</p></div>
       </div>
     </div>
   </div>
-  <div class="key">En Kafka <b>nadie borra</b>: cada consumer group lleva su propio marcador. Por eso se puede volver atrás.</div>
+  <div class="key">Kafka resuelve los dos patrones con una sola estructura: el <b>consumer group</b> define si se difunde o se reparte.</div>
 </section>
 
-<!-- 07 -->
-<section class="slide" data-notes="<b>6:50 · 1 min 20</b><ul><li>RabbitMQ es el del TP6: exchanges, bindings, colas, ack.</li><li>La diferencia de fondo: acá el mensaje <b>se borra</b> cuando se confirma.</li><li>No es cuál es mejor: es qué te compra cada uno.</li></ul>">
-  <div class="num">07</div>
-  <div class="head"><span class="kick">07</span><h2>RabbitMQ: colas que se vacían al confirmar</h2></div>
-  <div class="body">
-    <div class="flow" style="margin-bottom:4px">
-      <span class="node p">publisher</span><span class="arrow"></span>
-      <span class="node b">exchange<small>routing key</small></span><span class="arrow"></span>
-      <span class="node b">cola</span><span class="arrow"></span>
-      <span class="node c">consumer</span>
-    </div>
-    <table>
-      <thead><tr><th></th><th>Kafka</th><th>RabbitMQ</th></tr></thead>
+<!-- 09 · comparación y criterio -->
+<section class="slide" data-notes="<b>7:30 · 1 min 15</b><ul><li>No leer la tabla entera: remarcar cuándo se elimina el mensaje, replay y cómo cada uno difunde y reparte.</li><li>Criterio (un cuarto de la nota): por qué RabbitMQ, qué se paga y cuándo no lo usaríamos. No decir «es mejor»: decir qué compra en este caso.</li><li>RabbitMQ Streams (desde 3.9) agrega un log con replay, pero las colas clásicas y quorum no lo tienen.</li><li>Transición: «las dos herramientas entregan mensajes; la pregunta es qué pasa cuando algo falla en el medio de la entrega».</li></ul>">
+  <div class="num">09</div>
+  <div class="head"><span class="kick">09</span><h2>RabbitMQ vs Kafka: criterio de elección</h2></div>
+  <div class="body" style="gap:16px">
+    <table class="dense">
+      <thead><tr><th style="width:24%"></th><th style="width:38%">RabbitMQ</th><th style="width:38%">Kafka</th></tr></thead>
       <tbody>
-        <tr><td>Qué es</td><td>Log de particiones</td><td>Colas con exchanges</td></tr>
-        <tr><td>Cuándo desaparece el mensaje</td><td>Por retención</td><td>Al hacer <span class="mono">ack</span></td></tr>
-        <tr><td>Volver a leer el pasado</td><td class="yes">Sí, moviendo el offset</td><td class="no">No: ya se borró</td></tr>
-        <tr><td>Más consumidores = más velocidad</td><td>Sí, hasta el nº de particiones</td><td class="yes">Sí, sin techo fijo</td></tr>
-        <tr><td>Orden</td><td>Por partición</td><td>Por cola</td></tr>
+        <tr><td>Difundir</td><td>Exchange que copia a varias colas</td><td>Un consumer group por suscriptor</td></tr>
+        <tr><td>Repartir</td><td>Consumidores que compiten en una cola</td><td>Particiones repartidas dentro del grupo</td></tr>
+        <tr><td>Cuándo se elimina el mensaje</td><td>Al confirmar (<span class="mono">ack</span>)</td><td>Por retención</td></tr>
+        <tr><td>Releer el pasado</td><td class="no">No: lo confirmado ya no está (salvo Streams)</td><td class="yes">Sí, moviendo el offset</td></tr>
+        <tr><td>Durabilidad</td><td>Cola durable, mensajes persistentes; quorum queues</td><td>Réplicas por partición, <span class="mono">acks=all</span></td></tr>
+        <tr><td>Paralelismo</td><td>Lo limita la máquina, no un número fijo</td><td>Hasta el nº de particiones</td></tr>
+        <tr><td>Orden</td><td>Por cola, con un solo consumidor</td><td>Por partición</td></tr>
+        <tr><td>Ruteo</td><td>Rico: direct, fanout, topic, headers</td><td>Simple: tópico + key</td></tr>
       </tbody>
     </table>
-  </div>
-  <div class="key">En RabbitMQ el mensaje <b>se borra cuando confirmás</b>. Es eficiente, y es irreversible.</div>
-</section>
-
-<!-- 08 -->
-<section class="slide" data-notes="<b>8:10 · 1 min 30</b><ul><li>La slide con más preguntas posibles. Ir despacio.</li><li>«Exactly once» casi nunca es del broker solo: es broker + consumidor idempotente.</li><li>Frase para dejar: at-least-once es una garantía del broker <b>y</b> una obligación del consumidor.</li></ul>">
-  <div class="num">08</div>
-  <div class="head"><span class="kick">08</span><h2>Garantías: lo que el broker no te regala</h2></div>
-  <div class="body">
-    <div class="cards c3">
-      <div class="card amber"><span class="tag">at-most-once</span><h3>Puede perderse</h3><p>Confirmo antes de procesar. Si me caigo, el mensaje ya no está. Rápido y sin duplicados.</p></div>
-      <div class="card"><span class="tag">at-least-once</span><h3>Puede repetirse</h3><p>Confirmo <b>después</b> de procesar. Si me caigo antes, vuelve. Nunca se pierde, puede duplicarse.</p></div>
-      <div class="card violet"><span class="tag">exactly-once</span><h3>Carísimo</h3><p>No es gratis ni es del broker solo: hace falta transacción o un consumidor idempotente.</p></div>
-    </div>
     <div class="cards c2">
-      <div class="card"><h3>Duplicar es normal</h3>
-        <ul class="warn">
-          <li>La red no distingue «no llegó» de «llegó y no me enteré».</li>
-          <li><b>Idempotencia:</b> procesar dos veces deja el mismo resultado.</li>
-        </ul>
-      </div>
-      <div class="card"><h3>Orden</h3>
-        <ul class="calm">
-          <li>Existe dentro de una partición o de una cola. Global, no.</li>
-          <li>La garantía no es configuración: es qué hace tu código cuando algo se repite.</li>
-        </ul>
-      </div>
+      <div class="card"><h3>Por qué elegimos RabbitMQ</h3><p>El caso es repartir tareas y notificar eventos, con ack y reentrega por mensaje: el modo de falla se observa directamente. Un nodo liviano alcanza en la VM del TP1.</p></div>
+      <div class="card amber"><h3>Qué se paga · cuándo no</h3><p>Sin replay, orden no garantizado con varios consumidores y un solo nodo como punto único de falla. Si hace falta histórico o releer el flujo: Kafka. Si hace falta respuesta inmediata: llamada directa.</p></div>
     </div>
   </div>
-  <div class="key"><b>At-least-once</b> no es una promesa del broker: es una obligación del consumidor. Si no es idempotente, duplica.</div>
+  <div class="key">Repartir y rutear → <b>RabbitMQ</b>. Histórico y replay → <b>Kafka</b>. Respuesta inmediata → <b>llamada directa</b>.</div>
 </section>
 
-<!-- 09 -->
-<section class="slide" data-notes="<b>9:40 · 1 min 20</b><ul><li>Una cuarta parte de la nota es <b>criterio</b>. No decir «elegimos X porque es mejor».</li><li>Decir qué se paga y en qué caso concreto no lo usaríamos.</li><li>Cerrar con la decisión del grupo y por qué.</li></ul>">
-  <div class="num">09</div>
-  <div class="head"><span class="kick">09</span><h2>Criterio: qué se paga y cuándo no usarlo</h2></div>
-  <div class="body">
-    <div class="cards c2">
-      <div class="card amber"><h3>Lo que se paga</h3>
-        <ul class="warn">
-          <li>Un servicio más que opera alguien.</li>
-          <li>Latencia extra y consistencia eventual.</li>
-          <li>Datos vivos en otro lado: retención, respaldo, permisos.</li>
-          <li>Depurar es más difícil: el error está en un tercero.</li>
-        </ul>
-      </div>
-      <div class="card"><h3>Cuándo no lo usaría</h3>
-        <ul class="calm">
-          <li>Necesitás la respuesta ahora (consulta, pantalla, RPC).</li>
-          <li>El volumen es trivial: un <span class="mono">INSERT</span> alcanza.</li>
-          <li>Nadie puede operar el broker: un componente que nadie mantiene es una bomba.</li>
-          <li>Necesitás orden global estricto.</li>
-        </ul>
-      </div>
-    </div>
-    <div class="dash">
-      <h3>Decisión del grupo · completar con Ureta</h3>
-      <p>Elegimos <b>____</b> porque la demo tiene que mostrar <b>____</b>, que es justo lo que el TP6 no podía mostrar. Lo pagamos con <b>____</b>.</p>
-    </div>
-  </div>
-  <div class="key">El broker no elimina complejidad: la <b>mueve de lugar</b> y te la cobra en operación.</div>
-</section>
-
-<!-- 10 -->
-<section class="slide" data-notes="<b>11:00 · 20 s de transición</b><ul><li>Abrir la demo con esta slide atrás. Nada de tipear largo: comandos ya pegados.</li><li>Un camino feliz + <b>una</b> falla. No más.</li><li>Si algo cuelga, pasar a la grabación de respaldo sin pedir disculpas.</li></ul>">
+<!-- 10 · garantías -->
+<section class="slide" data-notes="<b>8:45 · 1 min 15</b><ul><li>Por qué está acá: después de ver cómo entregan las herramientas, la pregunta es qué pasa si algo falla en el medio de la entrega. Y es la teoría del paso de falla de la demo.</li><li>Coulouris pide validez (todo mensaje llega) e integridad (llega idéntico y una sola vez). At-least-once asegura la validez; la idempotencia del consumidor completa la integridad.</li><li>El acuerdo («todos o ninguno») es propio del multicast fiable de grupos.</li><li>Transición: «esto es exactamente lo que vamos a provocar en la demo».</li></ul>">
   <div class="num">10</div>
-  <div class="head"><span class="kick">10</span><h2>Demo: tres momentos, cinco minutos</h2></div>
+  <div class="head"><span class="kick">10</span><h2>Garantías: qué pasa si algo falla en la entrega</h2></div>
   <div class="body">
     <div class="cards c3">
-      <div class="card"><span class="tag">1 · el antes</span><h3>Directo se rompe</h3><p>Productor a 20/s contra un consumidor de 8/s. Timeouts, reintentos, trabajo perdido.</p><p class="hint">mirar: la deuda crece y no se recupera</p></div>
-      <div class="card"><span class="tag">2 · con broker</span><h3>Nada se pierde</h3><p>El mismo tráfico pasa por el broker. El consumidor sigue lento, pero la deuda espera.</p><p class="hint">mirar: producido − consumido = lo guardado</p></div>
-      <div class="card violet"><span class="tag">3 · la falla</span><h3>Se cae el consumidor</h3><p>Se mata un consumidor en vivo. La deuda no se pierde y otro la termina al volver.</p><p class="hint">mirar: el contador de entregados no baja</p></div>
+      <div class="card amber"><span class="tag">at-most-once</span><h3>Puede perderse</h3><p>Se confirma antes de procesar. Si el consumidor cae, el mensaje se pierde.</p><p class="hint">RabbitMQ: autoAck · Kafka: commit antes</p></div>
+      <div class="card"><span class="tag">at-least-once</span><h3>Puede repetirse</h3><p>Se confirma después de procesar. Si cae antes del ack, se reentrega: puede duplicarse.</p><p class="hint">RabbitMQ: ack manual · Kafka: commit después</p></div>
+      <div class="card violet"><span class="tag">exactly-once</span><h3>No lo da el broker solo</h3><p>Requiere transacciones o un consumidor idempotente.</p><p class="hint">Kafka: transacciones, solo dentro de Kafka</p></div>
     </div>
-    <p style="font-size:13.5px;color:var(--muted)">Todo lo que se muestra sale del broker real, no de una simulación: los números son los que devuelve el servidor.</p>
+    <div class="cards c2">
+      <div class="card"><h3>Idempotencia</h3><p>La red no distingue «no llegó» de «llegó y se perdió el ack». Procesar dos veces debe dejar el mismo resultado, por ejemplo deduplicando por id de mensaje.</p></div>
+      <div class="card"><h3>Orden</h3><p>Se garantiza por cola con un solo consumidor, o por partición (misma key). No hay orden global, y una reentrega altera el orden de procesamiento.</p></div>
+    </div>
   </div>
-  <div class="key">Cinco minutos para ver lo que ninguna slide puede mostrar: <b>el trabajo esperando</b>.</div>
+  <div class="key">En la demo: un worker cae antes del ack y RabbitMQ reentrega la tarea. Es <b>at-least-once</b>: no se pierde, pero puede duplicarse.</div>
 </section>
 
-<!-- 11 -->
-<section class="slide" data-notes="<b>11:20 · 30 s</b><ul><li>Cerrar rápido y dejar la puerta abierta a preguntas.</li><li>Si preguntan por la herramienta, responder con el criterio, no con la preferencia.</li></ul>">
+<!-- 11 · demo -->
+<section class="slide" data-notes="<b>10:00 · 20 s de transición, después 5 min de demo</b><ul><li>Todo precargado: pared local abierta en 127.0.0.1:7000, broker arriba y los atajos a mano. Nada de tipear largo.</li><li><b>Directa (1 min):</b> <code>p1 5</code> sin consumidor y después con <code>c1</code>; al final <code>c1 --ms 1500</code> para el timeout.</li><li><b>Broker (1 min 30):</b> repartir con <code>c2 2 repartir</code> y <code>p2 20 repartir</code>; cortar los consumidores con ■ y ver crecer la deuda; sumar consumidores y verla bajar; después difundir.</li><li><b>Saturación (1 min 30):</b> <code>p2 saturar</code> llena la cola de 100 mensajes; al llegar al techo deja de aceptar y el productor queda bloqueado. Después <code>c2 saturar</code> para drenar y ver que sigue.</li><li><b>Reentrega (50 s):</b> <code>c3 --caida-en 3</code> y volver a levantarlo con <code>c3</code>.</li><li>Si algo falla, pasar a la grabación de respaldo sin intentar arreglarlo en vivo.</li></ul>">
   <div class="num">11</div>
-  <div class="head"><span class="kick">11</span><h2>Si te llevás tres cosas</h2></div>
+  <div class="head"><span class="kick">11</span><h2>Demo: cuatro momentos, cinco minutos</h2></div>
+  <div class="body">
+    <div class="cards c2">
+      <div class="card"><span class="tag">1 · el antes</span><h3>Directa, sin nadie del otro lado</h3><p>El productor conoce la dirección, pero si el consumidor no está, no hay dónde dejar el trabajo. Y si tarda, la respuesta llega tarde.</p><p class="hint">mirar: el error en rojo y el productor clavado</p></div>
+      <div class="card"><span class="tag">2 · con broker</span><h3>Repartir y difundir</h3><p>Una cola reparte entre workers; un exchange manda una copia a cada suscriptor. La deuda de la banda es el trabajo esperando.</p><p class="hint">mirar: la deuda subir y bajar</p></div>
+      <div class="card amber"><span class="tag">3 · la saturación</span><h3>El broker también se llena</h3><p>Sin consumidores la cola se llena. Tiene un techo de 100 mensajes: al llegar, Rabbit deja de aceptar y el productor queda bloqueado.</p><p class="hint">mirar: el tanque en 100 y el productor clavado</p></div>
+      <div class="card violet"><span class="tag">4 · la falla</span><h3>Reentrega</h3><p>El consumidor cae antes de confirmar. Al volver, RabbitMQ entrega el mensaje otra vez.</p><p class="hint">mirar: el mismo número vuelve</p></div>
+    </div>
+    <p style="font-size:13.5px;color:var(--muted)">Las llamadas directas no usan broker; el resto se observa en RabbitMQ, con la deuda de la cola y el bloqueo del productor en la banda.</p>
+  </div>
+  <div class="key">Cinco minutos para ver lo que ninguna slide puede mostrar: <b>el trabajo esperando</b> y hasta dónde aguanta el broker.</div>
+</section>
+
+<!-- 12 · cierre -->
+<section class="slide" data-notes="<b>15:00 · 30 s</b><ul><li>Cerrar rápido y dejar la puerta abierta a preguntas.</li><li>Si preguntan por la herramienta, responder con el criterio, no con la preferencia.</li></ul>">
+  <div class="num">12</div>
+  <div class="head"><span class="kick">12</span><h2>Si te llevás tres cosas</h2></div>
   <div class="body">
     <div class="take">
       <div class="card"><span class="n">01</span><h3>Desacoplar es ganar tiempo</h3><p>El broker no acerca los procesos: los libera de coincidir.</p></div>
@@ -467,7 +513,7 @@
 </div>
 
 <div class="hud">
-  <span><b id="cnt">1 / 11</b></span>
+  <span><b id="cnt">1 / 12</b></span>
   <span>← → · n notas · e editar</span>
 </div>
 
@@ -483,7 +529,7 @@
   var toolbar= document.getElementById('toolbar');
   var i = 0, editing = false;
 
-  var KEY = 'sd-g7-deck-v1';
+  var KEY = 'sd-g7-deck-v4';
 
   /* ── escala: el escenario siempre entra en pantalla ── */
   function fit(){
@@ -499,8 +545,8 @@
     prog.style.width = ((i + 1) / slides.length * 100) + '%';
     cnt.textContent = (i + 1) + ' / ' + slides.length;
     notes.innerHTML = slides[i].getAttribute('data-notes') || '<span style="color:#4a5f74">Sin notas.</span>';
-    // En file:// algunos navegadores no dejan tocar el historial. No es
-    // crítico: la slide ya está pintada y sólo se pierde el #n de la URL.
+    // Con file:// algunos navegadores no dejan tocar el historial: la slide ya
+    // está pintada y solo se pierde el #n de la URL, así que no corta la demo.
     try {
       if (location.hash !== '#' + (i + 1)) history.replaceState(null, '', '#' + (i + 1));
     } catch (e) { /* abierto como archivo local */ }
@@ -508,7 +554,7 @@
   function toggleNotes(){ notes.classList.toggle('on'); }
 
   /* ── edición en el navegador ── */
-  var editable = 'h1,h2,h3,p,li,td,th,.key,.sub,.hint';
+  var editable = 'h1,h2,h3,p,li,td,th,.key,.sub,.hint,.def';
 
   function setEditing(on){
     editing = on;
