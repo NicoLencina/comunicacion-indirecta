@@ -414,7 +414,7 @@
 </section>
 
 <!-- 08 · Kafka -->
-<section class="slide" data-notes="<b>6:15 · 1 min 15</b><ul><li>Es el plus de la exposición: el TP6 no cubría logs ni offsets.</li><li>El offset se guarda en el tópico interno __consumer_offsets.</li><li>Replay: --to-earliest, --to-offset o --to-datetime. Un grupo nuevo arranca según auto.offset.reset (por defecto, desde el final). Usos: reprocesar tras corregir un bug, sumar un consumidor que lea el histórico.</li><li>Durabilidad: con min.insync.replicas, si no hay suficientes réplicas sincronizadas la escritura falla en vez de perder datos.</li><li>Rebalanceo: si un consumidor cae, sus particiones se reasignan a los demás del grupo.</li><li>Relación con Coulouris: la estrategia rendezvous de pub/sub distribuido particiona el espacio de eventos entre brokers; las particiones de Kafka repartidas entre brokers siguen esa idea.</li><li>Transición: «comparemos las dos herramientas».</li></ul>">
+<section class="slide" data-notes="<b>6:15 · 1 min 15</b><ul><li>Es el plus de la exposición: el TP6 no cubría logs ni offsets.</li><li>El offset se guarda en el tópico interno __consumer_offsets.</li><li>Replay: --to-earliest, --to-offset o --to-datetime. Un grupo nuevo arranca según auto.offset.reset (por defecto, desde el final). Usos: reprocesar tras corregir un bug, sumar un consumidor que lea el histórico.</li><li>Durabilidad: con min.insync.replicas, si no hay suficientes réplicas sincronizadas la escritura falla en vez de perder datos.</li><li>Recorrer el ejemplo de abajo: key cliente-42 → siempre P1 → offset 5. La key fija la partición; por eso dos mensajes con la misma key quedan ordenados entre sí.</li><li>Rebalanceo: si un consumidor cae, sus particiones se reasignan a los demás del grupo.</li><li>Relación con Coulouris: la estrategia rendezvous de pub/sub distribuido particiona el espacio de eventos entre brokers; las particiones de Kafka repartidas entre brokers siguen esa idea.</li><li>Transición: «comparemos las dos herramientas».</li></ul>">
   <div class="num">08</div>
   <div class="head"><span class="kick">08</span><h2>Kafka: log particionado y consumer groups</h2></div>
   <div class="body">
@@ -450,6 +450,7 @@
         </ul>
       </div>
     </div>
+    <p class="def" style="font-size:15px;padding:10px 16px;line-height:1.4"><b>Ejemplo:</b> se publica un evento con key <span class="mono">cliente-42</span>; el hash la manda siempre a <b>P1</b>, y ahí el mensaje toma el <b>offset 5</b>. Si <b>C2</b> se cae, P2 pasa a <b>C1</b>: eso es el rebalanceo. Y el offset 5 sigue en disco: otro grupo puede leerlo desde ahí.</p>
   </div>
   <div class="key">Kafka resuelve los dos patrones con una sola estructura: el <b>consumer group</b> define si se difunde o se reparte.</div>
 </section>
