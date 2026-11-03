@@ -142,6 +142,7 @@
   th{color:var(--muted);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
   td:first-child{font-weight:650;color:#fff}
   table.dense td,table.dense th{padding:8px 12px}
+  #s07 td,#s07 th{padding:6px 12px}
   .yes{color:var(--mint);font-weight:700}
   .no{color:var(--amber);font-weight:700}
 
@@ -357,36 +358,59 @@
 </section>
 
 <!-- 07 · RabbitMQ -->
-<section class="slide" data-notes="<b>5:00 · 1 min 15</b><ul><li>Es la herramienta del TP6 y la de la demo.</li><li>Durabilidad: para que el mensaje sobreviva a una caída del broker, la cola debe ser durable y el mensaje persistente; los publisher confirms le avisan al productor que el broker lo guardó.</li><li>Los dos patrones con piezas distintas: el exchange difunde (una cola por suscriptor), la cola reparte (consumidores que compiten).</li><li>Respuesta del TP6: un mensaje sin binding que coincida se descarta, salvo mandatory o alternate exchange.</li><li>Transición: «en RabbitMQ el mensaje se borra al confirmar. Kafka resuelve los mismos patrones sin borrar».</li></ul>">
+<section id="s07" class="slide" style="padding:40px 76px 26px" data-notes="<b>5:00 · 1 min 15</b><ul><li>Es la herramienta del TP6 y la de la demo.</li><li>Recorrer el ejemplo con el dedo: se publica con routing key stock.NYSE.ibm; el binding stock.NYSE.* lo manda a la cola A, y el binding stock.# también lo manda a la cola B. Las dos reciben copia: eso es difundir.</li><li>El binding es una regla guardada en el broker: no viaja con el mensaje. La routing key sí viaja, la escribe el productor.</li><li>fanout ignora la routing key y copia a todas las colas bindeadas a ese exchange, no a todas las colas del broker.</li><li>Durabilidad: son tres protecciones contra tres accidentes distintos. Si falta una, se pierde igual. Y todavía falta el ack del consumidor.</li><li>Respuesta del TP6: un mensaje sin binding que coincida se descarta en silencio, salvo mandatory o alternate exchange.</li><li>Transición: «en RabbitMQ el mensaje se borra al confirmar. Kafka resuelve los mismos patrones sin borrar».</li></ul>">
   <div class="num">07</div>
   <div class="head"><span class="kick">07</span><h2>RabbitMQ: exchanges, colas y ack</h2></div>
-  <div class="body">
+  <div class="body" style="gap:10px;padding:0">
     <div class="flow">
       <span class="node p">publisher</span><span class="arrow"></span>
       <span class="node b">exchange<small>routing key</small></span><span class="arrow"></span>
       <span class="stack"><span class="node b sm">cola A · binding stock.NYSE.*</span><span class="node b sm">cola B · binding stock.#</span></span><span class="arrow"></span>
       <span class="stack"><span class="node c sm">consumidores de A</span><span class="node c sm">consumidores de B</span></span>
     </div>
+
+    <table class="dense">
+      <tr><th style="width:44%">binding declarado en el broker</th><th>¿matchea la routing key <span class="mono">stock.NYSE.ibm</span>?</th></tr>
+      <tr><td class="mono">stock.NYSE.* → cola A</td><td><span class="yes">✓ sí</span> · <span class="mono">*</span> es una palabra, y es <span class="mono">NYSE</span></td></tr>
+      <tr><td class="mono">stock.# → cola B</td><td><span class="yes">✓ sí</span> · <span class="mono">#</span> son cero o más palabras</td></tr>
+      <tr><td class="mono">stock.NASDAQ.* → cola C</td><td><span class="no">✗ no</span> · la segunda palabra no es <span class="mono">NASDAQ</span></td></tr>
+    </table>
+
     <div class="cards c2">
       <div class="card violet"><h3>Difundir: el exchange copia</h3>
         <ul class="vio tight">
-          <li>Copia el mensaje a cada cola cuyo binding coincide con la routing key.</li>
-          <li><b>direct:</b> key exacta · <b>fanout:</b> todas las colas · <b>topic:</b> patrones, <span class="mono">*</span> una palabra, <span class="mono">#</span> cero o más.</li>
+          <li>Copia el mensaje a <b>cada cola</b> cuyo binding coincide con la routing key.</li>
+          <li><b>fanout</b> no mira la routing key: copia a todas las colas bindeadas <b>a ese exchange</b>, no a todas las del broker.</li>
+          <li><b>direct:</b> key exacta · <b>topic:</b> patrones (<span class="mono">*</span> una, <span class="mono">#</span> varias).</li>
           <li>Sin binding que coincida, el mensaje se <b>descarta</b> (salvo <span class="mono">mandatory</span> o alternate exchange).</li>
         </ul>
       </div>
       <div class="card"><h3>Repartir: la cola compite</h3>
         <ul class="tight">
           <li>Varios consumidores de una misma cola compiten: cada mensaje lo recibe uno.</li>
-          <li><b>Ack manual:</b> al confirmar, el broker elimina el mensaje. Sin ack (consumidor caído), lo <b>reentrega</b> a otro.</li>
-          <li><b>prefetch = 1:</b> un mensaje sin confirmar por consumidor (fair dispatch).</li>
+          <li><b>Ack manual:</b> al confirmar, el broker elimina el mensaje. Sin ack, lo <b>reentrega</b>.</li>
+          <li><b>prefetch = 1:</b> un mensaje sin confirmar por consumidor.</li>
           <li>Recepción: <span class="mono">basic.consume</span> (push) o <span class="mono">basic.get</span> (polling).</li>
         </ul>
       </div>
     </div>
-    <p class="hint" style="font-family:ui-monospace,monospace;font-size:12.5px;color:var(--muted)"><b style="color:#d3dee9">Durabilidad:</b> cola durable + mensajes persistentes + publisher confirms. Las quorum queues replican la cola entre nodos. Sin replay: lo confirmado se elimina.</p>
+
+    <div class="cards c3">
+      <div class="card" style="padding:13px 16px"><h3>Cola durable</h3>
+        <p>La definición de la cola sobrevive al reinicio.</p>
+        <p class="hint">Si falta: la cola desaparece con todo.</p>
+      </div>
+      <div class="card amber" style="padding:13px 16px"><h3>Mensaje persistente</h3>
+        <p>Se escribe a disco: <span class="mono">delivery_mode=2</span>.</p>
+        <p class="hint">Si falta: vuelve la cola, no los mensajes.</p>
+      </div>
+      <div class="card violet" style="padding:13px 16px"><h3>Publisher confirm</h3>
+        <p>El broker responde <span class="mono">ack</span> o <span class="mono">nack</span>: el productor sabe.</p>
+        <p class="hint">Si falta: se pierde y nadie reenvía.</p>
+      </div>
+    </div>
   </div>
-  <div class="key">El <b>exchange</b> difunde y la <b>cola</b> reparte. El mensaje se elimina al confirmarse.</div>
+  <div class="key">El <b>exchange</b> difunde y la <b>cola</b> reparte. El mensaje se elimina al confirmarse: sin ack del consumidor, todavía no es tuyo.</div>
 </section>
 
 <!-- 08 · Kafka -->
