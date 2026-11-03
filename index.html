@@ -353,6 +353,7 @@
       </div>
     </div>
   </div>
+  <div class="key">La misma plomería, dos decisiones: ¿este mensaje lo necesitan <b>todos</b> o lo resuelve <b>uno</b>?</div>
 </section>
 
 <!-- 07 · RabbitMQ -->
@@ -469,7 +470,6 @@
       <div class="card"><h3>Idempotencia</h3><p>La red no distingue «no llegó» de «llegó y se perdió el ack». Procesar dos veces debe dejar el mismo resultado, por ejemplo deduplicando por id de mensaje.</p></div>
       <div class="card"><h3>Orden</h3><p>Se garantiza por cola con un solo consumidor, o por partición (misma key). No hay orden global, y una reentrega altera el orden de procesamiento.</p></div>
     </div>
-    <p class="hint" style="font-family:ui-monospace,monospace;font-size:12.5px;color:var(--muted)"><b style="color:#d3dee9">Durabilidad:</b> cola durable + mensajes persistentes + publisher confirms. Las quorum queues replican la cola entre nodos. Sin replay: lo confirmado se elimina.</p>
   </div>
   <div class="key">En la demo: un worker cae antes del ack y RabbitMQ reentrega la tarea. Es <b>at-least-once</b>: no se pierde, pero puede duplicarse.</div>
 </section>
@@ -495,14 +495,13 @@
   <div class="num">12</div>
   <div class="head"><span class="kick">12</span><h2>Si te llevás tres cosas</h2></div>
   <div class="body">
-    <div class="cards c2">
-      <div class="card"><span class="tag">0 · el antes · sd-demo.py</span><h3>Comunicación directa</h3><p>Productor y consumidor por HTTP, sin broker. Al bajar la velocidad del consumidor aparecen los timeouts.</p><p class="hint">mirar: timeouts del productor vs deuda del consumidor</p></div>
-      <div class="card violet"><span class="tag">1 · pub/sub</span><h3>Topic exchange y tres suscriptores</h3><p>Un mismo evento llega a todos los suscriptores cuyo binding coincide.</p><p class="hint">mirar: el mismo mensaje en las tres terminales</p></div>
-      <div class="card"><span class="tag">2 · cola de trabajo</span><h3>Workers que compiten</h3><p>Cada tarea la toma un solo worker. Con ack manual y prefetch = 1, sumar workers baja el tiempo total.</p><p class="hint">mirar: tiempo total con 1 worker vs con 3</p></div>
-      <div class="card amber"><span class="tag">3 · modo de falla</span><h3>Caída de un worker antes del ack</h3><p>La tarea sin confirmar vuelve a la cola y la recibe otro worker (redelivery). No se pierde trabajo.</p><p class="hint">mirar: consola :15672, Unacked → Ready</p></div>
+    <div class="take">
+      <div class="card"><span class="n">01</span><h3>Desacoplar es ganar tiempo</h3><p>El broker no acerca los procesos: los libera de coincidir.</p></div>
+      <div class="card"><span class="n">02</span><h3>Difundir ≠ repartir</h3><p>Misma infraestructura, decisión distinta. Se elige por quién consume.</p></div>
+      <div class="card"><span class="n">03</span><h3>La garantía vive en tu código</h3><p>At-least-once es una obligación: sin idempotencia, el broker no te salva.</p></div>
     </div>
   </div>
-  <div class="key">Un broker, los dos patrones y una falla: lo mismo que la teoría, <b>en vivo</b>.</div>
+  <div class="key">Preguntas. <span style="color:#7e93a8;font-weight:500">Grupo 7 · Lencina · Ureta</span></div>
 </section>
 
 </div>
